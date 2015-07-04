@@ -2,10 +2,10 @@ _ = require 'underscore-plus'
 settings = require './settings'
 
 class Label extends HTMLElement
-  initialize: ({@editorView, label, @marker}) ->
+  initialize: ({@editorView, @marker}) ->
     @classList.add 'smalls', 'label'
     @classList.add 'inline-block', 'highlight-info'
-    @textContent = label
+    # @textContent = label
     @editor      = @editorView.getModel()
     labelPosition = _.capitalize settings.get('labelPosition')
     @position = @marker["get#{labelPosition}BufferPosition"]()
@@ -23,15 +23,15 @@ class Label extends HTMLElement
   jump: ->
     atom.workspace.paneForItem(@editor).activate()
     if (@editor.getSelections().length is 1) and (not @editor.getLastSelection().isEmpty())
-      @editor.selectToScreenPosition @position
+      @editor.selectToBufferPosition @position
     else
-      @editor.setCursorScreenPosition @position
+      @editor.setCursorBufferPosition @position
 
     if settings.get('flashOnLand')
       @flash()
 
   attachedCallback: ->
-    px = @editorView.pixelPositionForScreenPosition @position
+    px = @editorView.pixelPositionForBufferPosition @position
     scrollLeft = @editor.getScrollLeft()
     scrollTop  = @editor.getScrollTop()
     @style.left  = "#{px.left - scrollLeft}px"

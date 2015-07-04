@@ -1,4 +1,5 @@
 {CompositeDisposable} = require 'atom'
+_ = require 'underscore-plus'
 settings = require './settings'
 class Input extends HTMLElement
   createdCallback: ->
@@ -19,11 +20,11 @@ class Input extends HTMLElement
     @defaultText = ''
     @hideOtherBottomPanels()
     @panel = atom.workspace.addBottomPanel item: this
-    @editorElement.focus()
     atom.commands.add @editorElement, 'core:confirm', @confirm.bind(this)
     atom.commands.add @editorElement, 'core:cancel' , @cancel.bind(this)
     atom.commands.add @editorElement, 'blur'        , @cancel.bind(this)
-    @handleJump()
+    @editorElement.focus()
+    @start()
     this
 
   hideOtherBottomPanels: ->
@@ -40,16 +41,14 @@ class Input extends HTMLElement
   destroy: ->
     @remove()
 
-  handleJump: ->
+  start: ->
     @jumpMode = false
     @subscriptions = new CompositeDisposable
-
+    label2target = null
     @subscriptions.add @editor.onWillInsertText ({text, cancel}) =>
       if @jumpMode
         cancel()
-        if target = @main.label2target[text.toUpperCase()]
-          target.jump()
-          @main.clear()
+        @main.getTarget text
       else
         if text is ';'
           cancel()

@@ -38,7 +38,8 @@ module.exports =
       @decorate editor, pattern
 
   decorate: (editor, pattern) ->
-    [startRow, endRow] = editor.getVisibleRowRange()
+    [startRow, endRow] = editor.getVisibleRowRange().map (row) ->
+      editor.bufferRowForScreenRow(row)
     scanRange = new Range([startRow, 0], [endRow, Infinity])
 
     if markers = @markersByEditorID[editor.id]
@@ -46,8 +47,9 @@ module.exports =
         marker.destroy()
 
     markers = []
-    editor.scanInBufferRange pattern, scanRange, ({range, stop}) =>
-      marker = editor.markBufferRange range,
+    @scan editor, pattern, (range) =>
+      # marker = editor.markBufferRange range,
+      marker = editor.markScreenRange range,
         invalidate: 'never'
         persistent: false
       markers.push marker
@@ -59,34 +61,80 @@ module.exports =
 
     @markersByEditorID[editor.id] = markers
 
+  scan: (editor, pattern, callback) ->
+    [firstVisibleRow, lastVisibleRow] = editor.getVisibleRowRange()
+    for row in [firstVisibleRow...lastVisibleRow]
+      if editor.isFoldedAtScreenRow(row)
+        continue
+      lineContents = editor.lineTextForScreenRow row
+      while match = pattern.exec(lineContents)
+        start = [row, match.index]
+        end = [row, match.index + match[0].length]
+        callback new Range(start, end)
+
+  # collectPoints: (editor, pattern) ->
+  #   points = []
+  #   [firstVisibleRow, lastVisibleRow] = editor.getVisibleRowRange()
+  #   for row in [firstVisibleRow...lastVisibleRow]
+  #     if editor.isFoldedAtScreenRow(row)
+  #       callback new Range(new Point(row, 0), new Point(row, 0))
+  #       # points.push
+  #     else
+  #       lineContents = editor.lineTextForScreenRow row
+  #       while match = pattern.exec(lineContents)
+  #         points.push new Point(row, match.index)
+  #   points
+  #
   showLabel: ->
     labels = @getLabels()
+    @labelElements = []
     for editor in @getVisibleEditor()
       container = new Container().initialize(editor)
       editorView = atom.views.getView(editor)
-      label2marker  = @getLabel2marker labels, @markersByEditorID[editor.id]
-      label2target = @getLabel2Target label2marker, editorView
-      for target in _.values(label2target)
-        container.appendChild target
-
+      for marker in @markersByEditorID[editor.id]
+        labelElement = new Label().initialize {editorView, marker}
+        container.appendChild labelElement
+        @labelElements.push labelElement
       @containers.push container
-      _.extend @label2target, label2target
 
-  getLabel2marker: (labels, markers) ->
-    label2marker = {}
-    for marker in markers
-      break unless label = labels.shift()
-      label2marker[label] = marker
-    label2marker
+    @label2target = @assignLabel labels, @labelElements
+    @setLabel @label2target
 
-  # [NOTE]
-  # _.mapObject is different between underscore.js and underscore-plus
-  # This is underscore-plus.
-  getLabel2Target: (label2marker, editorView) ->
-    _.mapObject label2marker, (label, marker) ->
-      element = new Label()
-      element.initialize {editorView, label, marker}
-      [label, element]
+  getTarget: (label) ->
+    label = label.toUpperCase()
+    return unless target = @label2target[label]
+    if _.isElement target
+      target.jump()
+      @clear()
+    else
+      for elem in @labelElements when elem.textContent isnt label
+        elem.destroy()
+      @label2target = target
+      @setLabel target
+
+  setLabel: (label2target, _label=false) ->
+    for label, elem of label2target
+      if _.isElement elem
+        elem.textContent = (_label or label)
+      else
+        @setLabel  elem, label
+
+  assignLabel: (labels, targets) ->
+    groups = {}
+    firstLabel = labels[0]
+    targets = targets.slice()
+    _labels = @getLabels()
+    while (_targets = targets.splice(0, _labels.length)).length
+      group = {}
+      i = 0
+      while _targets[0]?
+        group[_labels[i]] = _targets.shift()
+        i++
+      groups[labels.shift()] = group
+
+    if Object.keys(groups).length is 1
+      groups = groups[firstLabel]
+    groups
 
   # Others
   # -------------------------

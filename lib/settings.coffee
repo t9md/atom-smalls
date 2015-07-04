@@ -1,10 +1,6 @@
 ConfigPlus = require 'atom-config-plus'
 
 config =
-  highContrast:
-    description: 'This will display a high contrast label, usually green.  It is dynamic per theme.'
-    type: 'boolean'
-    default: false
   flashOnLand:
     order: 32
     type: 'boolean'

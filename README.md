@@ -10,7 +10,7 @@ Alpha.
 
 * Search and jump to character across visible panes.
 * Flashing cursor position on landing(enbaled by default).
-* [eazymotion](https://github.com/easymotion/vim-easymotion) style label jump.
+* [easymotion](https://github.com/easymotion/vim-easymotion) style label jump.
 * Port of my [vim-smalls](https://github.com/t9md/vim-smalls/blob/master/README.md).
 
 # How to use
