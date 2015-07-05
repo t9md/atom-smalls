@@ -92,6 +92,12 @@ IntelliJ
 * [x] Use panel to read input from user
 * [x] Customizable label style
 * [x] Refactoring especially `Input` view.
-* [ ] Better algorithm for labeling.
+* [ ] Better labeling algorithm to support more than 2 level nested label.
 * [ ] Unlock scroll cursor with hotkey?
 * [ ] Narrowing based on grammar scope?
+
+# Thanks to great predecessor!!
+My smalls work is based following work.
+
+- Lokaltog's [vim-easymotion](vim-easymotion)
+- DavidLGoldberg's [DavidLGoldberg/jumpy](https://github.com/DavidLGoldberg/jumpy)
