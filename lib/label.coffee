@@ -4,15 +4,19 @@ settings = require './settings'
 class Label extends HTMLElement
   initialize: ({@editorView, @marker}) ->
     @classList.add 'smalls', 'label'
-    @classList.add 'inline-block', 'highlight-info'
+    # @classList.add 'inline-block', 'highlight-info'
     # @textContent = label
-    @editor      = @editorView.getModel()
+    @editor       = @editorView.getModel()
     labelPosition = _.capitalize settings.get('labelPosition')
-    @position = @marker["get#{labelPosition}BufferPosition"]()
+    @position     = @marker["get#{labelPosition}BufferPosition"]()
     this
 
   flash: ->
-    decoration = @editor.decorateMarker @marker.copy(),
+    marker = @marker.copy()
+    if settings.get('flashType') is 'word'
+      marker.setBufferRange @editor.getLastCursor().getCurrentWordBufferRange()
+
+    decoration = @editor.decorateMarker marker,
       type: 'highlight'
       class: "smalls-flash"
 
@@ -26,16 +30,14 @@ class Label extends HTMLElement
       @editor.selectToBufferPosition @position
     else
       @editor.setCursorBufferPosition @position
-
-    if settings.get('flashOnLand')
-      @flash()
+    @flash() if settings.get('flashOnLand')
 
   attachedCallback: ->
-    px = @editorView.pixelPositionForBufferPosition @position
-    scrollLeft = @editor.getScrollLeft()
-    scrollTop  = @editor.getScrollTop()
-    @style.left  = "#{px.left - scrollLeft}px"
-    @style.top   = "#{px.top - scrollTop}px"
+    px          = @editorView.pixelPositionForBufferPosition @position
+    top         = px.top - @editor.getScrollTop()
+    left        = px.left - @editor.getScrollLeft()
+    @style.top  = top + 'px'
+    @style.left = left + 'px'
 
   destroy: ->
     @marker.destroy()
@@ -43,7 +45,7 @@ class Label extends HTMLElement
 
 class Container extends HTMLElement
   initialize: (editor) ->
-    @classList.add "smalls", "smalls-label-container"
+    @classList.add 'smalls', 'smalls-label-container'
     editorView = atom.views.getView editor
     @overlayer = editorView.shadowRoot.querySelector('content[select=".overlayer"]')
     @overlayer.appendChild this
@@ -51,10 +53,14 @@ class Container extends HTMLElement
   destroy: ->
     @remove()
 
+LabelElement = document.registerElement 'smalls-label',
+  prototype: Label.prototype
+  extends:   'div'
+
+ContainerElement = document.registerElement 'smalls-label-container',
+  prototype: Container.prototype
+  extends:   'div'
+
 module.exports =
-  Label: document.registerElement 'smalls-label',
-    prototype: Label.prototype
-    extends:   'div'
-  Container: document.registerElement 'smalls-label-container',
-    prototype: Container.prototype
-    extends:   'div'
+  Label: LabelElement
+  Container: ContainerElement

@@ -10,22 +10,38 @@ class Input extends HTMLElement
     @appendChild @editorContainer
 
   initialize: (@main) ->
-    @editorElement = document.createElement 'atom-text-editor'
-    @editorElement.classList.add('editor')
-    @editorElement.getModel().setMini(true)
-    @editorElement.setAttribute('mini', '')
-    @editorContainer.appendChild @editorElement
-    @editor = @editorElement.getModel()
+    @editorView = document.createElement 'atom-text-editor'
+    @editorView.classList.add('editor', 'smalls')
+    @editorView.getModel().setMini(true)
+    @editorView.setAttribute('mini', '')
+    @editorContainer.appendChild @editorView
+    @editor = @editorView.getModel()
 
     @defaultText = ''
-    @hideOtherBottomPanels()
-    @panel = atom.workspace.addBottomPanel item: this
-    atom.commands.add @editorElement, 'core:confirm', @confirm.bind(this)
-    atom.commands.add @editorElement, 'core:cancel' , @cancel.bind(this)
-    atom.commands.add @editorElement, 'blur'        , @cancel.bind(this)
-    @editorElement.focus()
-    @start()
+    @panel = atom.workspace.addBottomPanel item: this, visible: false
+    atom.commands.add @editorView, 'core:confirm', @startJumpMode.bind(this)
+    atom.commands.add @editorView, 'core:cancel' , @cancel.bind(this)
+    atom.commands.add @editorView, 'blur'        , @cancel.bind(this)
+    @handleInput()
     this
+
+  setMode: (mode) ->
+    if @mode?
+      @editorView.classList.remove @mode
+    @mode = mode
+    @editorView.classList.add(@mode)
+
+  getMode: ->
+    @mode
+
+  isJumpMode: ->
+    @getMode() is 'jump'
+
+  focus: ->
+    @setMode 'search'
+    @hideOtherBottomPanels()
+    @panel.show()
+    @editorView.focus()
 
   hideOtherBottomPanels: ->
     @hiddenPanels = []
@@ -39,41 +55,40 @@ class Input extends HTMLElement
     @hiddenPanels = []
 
   destroy: ->
+    @panel.destroy()
     @remove()
 
-  start: ->
-    @jumpMode = false
-    @subscriptions = new CompositeDisposable
-    label2target = null
-    @subscriptions.add @editor.onWillInsertText ({text, cancel}) =>
-      if @jumpMode
+  getText: ->
+    @editor.getText()
+
+  handleInput: ->
+    @subscriptions = subs = new CompositeDisposable
+
+    subs.add @editor.onWillInsertText ({text, cancel}) =>
+      if @isJumpMode()
         cancel()
         @main.getTarget text
-      else
-        if text is ';'
-          cancel()
-          @confirm()
 
-    @subscriptions.add @editor.onDidChange ({newText}) =>
-      @main.highlight @editor.getText()
-      if @editor.getText().length >= settings.get('maxInput')
-        @jumpMode = true
+    subs.add @editor.onDidChange =>
+      text = @editor.getText()
+      @main.search text
+      if text.length >= settings.get('jumpTriggerInputLength')
+        @startJumpMode()
 
-    @subscriptions.add @editor.onDidDestroy =>
+    subs.add @editor.onDidDestroy =>
       @subscriptions.dispose()
 
-  confirm: ->
-    @jumpMode = true
+  startJumpMode: ->
+    return if @editor.isEmpty()
+    @setMode 'jump'
     @main.showLabel()
 
   cancel: (e) ->
     @main.clear()
+    @editor.setText ''
     @showOtherBottomPanels()
-    @removePanel()
-
-  removePanel: ->
     atom.workspace.getActivePane().activate()
-    @panel.destroy()
+    @panel.hide()
 
 module.exports =
 document.registerElement 'smalls-input',

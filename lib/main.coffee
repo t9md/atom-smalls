@@ -2,9 +2,9 @@
 _ = require 'underscore-plus'
 settings = require './settings'
 
-Label = null
+Label     = null
 Container = null
-Input = null
+Input     = null
 
 module.exports =
   config: settings.config
@@ -16,39 +16,47 @@ module.exports =
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-workspace',
       'smalls:start': => @start()
-      'smalls:dump': => @dump()
+      'smalls:dump':  => @dump()
+
+    @subscriptions.add atom.commands.add 'atom-text-editor.smalls',
+      'smalls:jump': => @getInput()?.startJumpMode()
 
   deactivate: ->
     @clear()
     @subscriptions.dispose()
 
-  dump: ->
-    console.log @markersByEditorID
+  getInput: ->
+    @input
 
   start: ->
     @markersByEditorID = {}
     @containers        = []
     @label2target      = {}
-    input = new Input()
-    input.initialize(this)
+    @input ?= new Input().initialize(this)
+    @input.focus()
 
-  highlight: (text) ->
+  dump: ->
+    console.log @markersByEditorID
+
+  search: (text) ->
     pattern = ///#{_.escapeRegExp(text)}///ig
     for editor in @getVisibleEditor()
-      @decorate editor, pattern
+      @clearDecoration editor
+      if text isnt ''
+        @decorate editor, pattern
+
+  clearDecoration: (editor) ->
+    if markers = @markersByEditorID[editor.id]
+      for marker in markers
+        marker.destroy()
 
   decorate: (editor, pattern) ->
     [startRow, endRow] = editor.getVisibleRowRange().map (row) ->
       editor.bufferRowForScreenRow(row)
     scanRange = new Range([startRow, 0], [endRow, Infinity])
 
-    if markers = @markersByEditorID[editor.id]
-      for marker in markers
-        marker.destroy()
-
     markers = []
     @scan editor, pattern, (range) =>
-      # marker = editor.markBufferRange range,
       marker = editor.markScreenRange range,
         invalidate: 'never'
         persistent: false
@@ -66,11 +74,12 @@ module.exports =
     for row in [firstVisibleRow...lastVisibleRow]
       if editor.isFoldedAtScreenRow(row)
         continue
-      lineContents = editor.lineTextForScreenRow row
-      while match = pattern.exec(lineContents)
+        # callback new Range(new Point(row, 0), new Point(row, 0))
+      lineText = editor.lineTextForScreenRow row
+      while match = pattern.exec lineText
         start = [row, match.index]
         end = [row, match.index + match[0].length]
-        callback new Range(start, end)
+        callback [start, end]
 
   # collectPoints: (editor, pattern) ->
   #   points = []
@@ -139,9 +148,8 @@ module.exports =
   # Others
   # -------------------------
   clear: ->
-    for editorID, markers of @markersByEditorID
-      for marker in markers
-        marker.destroy()
+    for editor in @getVisibleEditor()
+      @clearDecoration editor
 
     for label, element of @label2target
       element.remove()

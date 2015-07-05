@@ -4,24 +4,26 @@ Rapid cursor positioning across any visible chars with search and jump.
 
 # Development state.
 
-Alpha.
+Beta.
 
 # Features
 
-* Search and jump to character across visible panes.
+* Search and jump to position across visible panes.
 * Flashing cursor position on landing(enbaled by default).
+* Automatically start jump-mode with configured input length.
 * [easymotion](https://github.com/easymotion/vim-easymotion) style label jump.
 * Port of my [vim-smalls](https://github.com/t9md/vim-smalls/blob/master/README.md).
 
 # How to use
 
 1. Start smalls-mode with `smalls:start`
-2. Input character then `enter` to the mini-panel.
-3. Choose overlaid label then you cursor landed to new position with flashing.
+2. Input character then Enter(`core:confirm`) or `smalls:jump`.
+3. Choose label then the cursor land to new position with flashing.
 
 # Commands
 
 * `smalls:start`: Start smalls jumping mode.
+* `smalls:jump`: Start jump mode, available within only smalls input UI.
 
 # Keymap
 No keymap by default.
@@ -30,7 +32,13 @@ e.g.
 
 ```coffeescript
 'atom-text-editor:not([mini])':
-  'ctrl-s': 'smalls:start'
+  'ctrl-;': 'smalls:start'
+
+# Optional.
+# By this setting we can speedily start jump with minimal hand movement.  
+# Limitation: You can't search `;` itself with smalls..
+'atom-text-editor.smalls.search':
+  ';': 'smalls:jump'
 ```
 
 * My setting, I'm [vim-mode](https://atom.io/packages/vim-mode) user.
@@ -67,6 +75,7 @@ IntelliJ
 # TODO
 
 * [x] Use panel to read input from user
-* [ ] Customizble style
-* [ ] Unlock scroll cursor?
+* [ ] Refactoring especially `Input` view.
+* [ ] Customizable style
+* [ ] Unlock scroll cursor with hotkey?
 * [ ] Narrowing based on grammar scope?

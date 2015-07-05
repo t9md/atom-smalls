@@ -1,51 +1,36 @@
 ConfigPlus = require 'atom-config-plus'
 
 config =
-  flashOnLand:
-    order: 32
-    type: 'boolean'
-    default: true
-    description: "flash cursor line on land"
-  flashDurationMilliSeconds:
-    order: 33
-    type: 'integer'
-    default: 200
-    description: "Duration for flash"
-  flashColor:
-    order: 34
-    type: 'string'
-    default: 'info'
-    enum: ['info', 'success', 'warning', 'error', 'highlight', 'selected']
-    description: 'flash color style, correspoinding to @background-color-#{flashColor}: see `styleguide:show`'
-  flashType:
-    order: 35
-    type: 'string'
-    default: 'line'
-    enum: ['line', 'word', 'point']
-    description: 'Range to be flashed'
-  debug:
-    order: 99
-    type: 'boolean'
-    default: false
-    description: "Output history on console.log"
   labelChars:
-    order:   101
+    order:   1
     type:    'string'
     default: ';ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  maxInput:
-    order:   102
-    type:    'integer'
-    default: 100
   labelPosition:
-    order: 110
-    type: 'string'
+    order:   3
+    type:    'string'
     default: 'start'
-    enum: ['start', 'end']
-  labelStyle:
-    order: 111
-    type: 'string'
-    default: 'badge icon icon-location'
-    description: "Style class for count span element. See `styleguide:show`."
+    enum:    ['start', 'end']
+  jumpTriggerInputLength:
+    order:       3
+    type:        'integer'
+    default:     100
+    description: "If input exceed this length, automatically start jump mode"
+  # labelStyle:
+  #   order:       111
+  #   type:        'string'
+  #   default:     'badge icon icon-location'
+  #   description: "Style class for count span element. See `styleguide:show`."
+  flashOnLand:
+    order:       32
+    type:        'boolean'
+    default:     true
+    description: "flash effect on land"
+  flashType:
+    order:       35
+    type:        'string'
+    default:     'match'
+    enum:        ['match', 'word']
+    description: 'Range to be flashed'
 
 # Default: badge icon icon-location
 # Case-1: badge badge-error icon icon-bookmark
