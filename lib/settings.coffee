@@ -24,6 +24,6 @@ module.exports = new ConfigPlus 'smalls',
   flashType:
     order:       35
     type:        'string'
-    default:     'match'
+    default:     'word'
     enum:        ['match', 'word']
     description: 'Range to be flashed'
