@@ -72,7 +72,8 @@ class Input extends HTMLElement
     subs.add @editor.onDidChange =>
       text = @editor.getText()
       @main.search text
-      if text.length >= settings.get('jumpTriggerInputLength')
+      jumpTriggerInputLength = settings.get 'jumpTriggerInputLength'
+      if jumpTriggerInputLength and (text.length >= jumpTriggerInputLength)
         @startJumpMode()
 
     subs.add @editor.onDidDestroy =>

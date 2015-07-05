@@ -2,10 +2,6 @@
 
 Rapid cursor positioning across any visible chars with search and jump.
 
-# Development state.
-
-Beta.
-
 # Features
 
 * Search and jump to position across visible panes.
@@ -13,6 +9,7 @@ Beta.
 * Automatically start jump-mode with configured input length.
 * [easymotion](https://github.com/easymotion/vim-easymotion) style label jump.
 * Port of my [vim-smalls](https://github.com/t9md/vim-smalls/blob/master/README.md).
+* Can choose where label is shown from 'start' and 'end' of matching text.
 
 # How to use
 
@@ -51,6 +48,22 @@ keybind.
   ';': 'smalls:start'
 ```
 
+# Customizing label style
+
+You can customzize label style in `style.less`.
+
+e.g.
+
+```less
+atom-text-editor::shadow {
+  .smalls {
+    &.label {
+      background-color: @background-color-success;
+    }
+  }
+}
+```
+
 # Similar packages
 
 Atom
@@ -75,7 +88,8 @@ IntelliJ
 # TODO
 
 * [x] Use panel to read input from user
-* [ ] Refactoring especially `Input` view.
-* [ ] Customizable style
+* [x] Customizable label style
+* [x] Refactoring especially `Input` view.
+* [ ] Better algorithm for labeling.
 * [ ] Unlock scroll cursor with hotkey?
 * [ ] Narrowing based on grammar scope?

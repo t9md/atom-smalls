@@ -124,7 +124,8 @@ module.exports =
   setLabel: (label2target, _label=false) ->
     for label, elem of label2target
       if _.isElement elem
-        elem.textContent = (_label or label)
+        # elem.textContent = (_label or label)
+        elem.setLabel (_label or label)
       else
         @setLabel  elem, label
 
@@ -153,6 +154,7 @@ module.exports =
 
     for label, element of @label2target
       element.remove()
+
     @label2target = null
     for container in @containers
       container.destroy()

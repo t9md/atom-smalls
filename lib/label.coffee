@@ -4,12 +4,13 @@ settings = require './settings'
 class Label extends HTMLElement
   initialize: ({@editorView, @marker}) ->
     @classList.add 'smalls', 'label'
-    # @classList.add 'inline-block', 'highlight-info'
-    # @textContent = label
     @editor       = @editorView.getModel()
     labelPosition = _.capitalize settings.get('labelPosition')
     @position     = @marker["get#{labelPosition}BufferPosition"]()
     this
+
+  setLabel: (label) ->
+    @textContent = label
 
   flash: ->
     marker = @marker.copy()
