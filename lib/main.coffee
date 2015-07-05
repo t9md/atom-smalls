@@ -8,7 +8,7 @@ Input     = null
 
 module.exports =
   config: settings.config
-
+  
   activate: ->
     {Label, Container} = require './label'
     Input = require './input'
@@ -22,7 +22,6 @@ module.exports =
     @subscriptions.add atom.commands.add 'atom-text-editor.smalls.search',
       'smalls:jump': => @input.jump()
 
-
   deactivate: ->
     @clear()
     @subscriptions.dispose()
@@ -34,18 +33,8 @@ module.exports =
     @labels            = []
     @input.focus()
 
-  getRegExp: (text) ->
-    if wildChar = settings.get('wildChar')
-      pattern = text.split(wildChar).map (pattern) ->
-        _.escapeRegExp(pattern)
-      .join('.*')
-    else
-      pattern = _.escapeRegExp(text)
-
-    ///#{pattern}///ig
-
   search: (text) ->
-    pattern = @getRegExp text
+    pattern = ///#{text}///ig
     for editor in @getVisibleEditor()
       @clearDecoration editor
       if text isnt ''

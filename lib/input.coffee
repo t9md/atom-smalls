@@ -1,5 +1,4 @@
 {CompositeDisposable} = require 'atom'
-# _ = require 'underscore-plus'
 settings = require './settings'
 
 class Input extends HTMLElement
@@ -41,16 +40,10 @@ class Input extends HTMLElement
 
   handleInput: ->
     @subscriptions = subs = new CompositeDisposable
-    wildChar = settings.get('wildChar')
     subs.add @editor.onWillInsertText ({text, cancel}) =>
       if @getMode() is 'jump'
         cancel()
         @main.getTarget text
-
-      # Prevent wildChar as firstChar goes infinite searching.
-      if @editor.isEmpty() and text is wildChar
-        cancel()
-
 
     subs.add @editor.onDidChange =>
       text = @editor.getText()
