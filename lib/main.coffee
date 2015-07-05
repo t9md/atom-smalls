@@ -16,9 +16,8 @@ module.exports =
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-workspace',
       'smalls:start': => @start()
-      'smalls:dump':  => @dump()
 
-    @subscriptions.add atom.commands.add 'atom-text-editor.smalls',
+    @subscriptions.add atom.commands.add 'atom-text-editor.smalls.search',
       'smalls:jump': => @getInput()?.startJumpMode()
 
   deactivate: ->
@@ -32,11 +31,10 @@ module.exports =
     @markersByEditorID = {}
     @containers        = []
     @label2target      = {}
+    @labels            = []
+
     @input ?= new Input().initialize(this)
     @input.focus()
-
-  dump: ->
-    console.log @markersByEditorID
 
   search: (text) ->
     pattern = ///#{_.escapeRegExp(text)}///ig
@@ -51,16 +49,11 @@ module.exports =
         marker.destroy()
 
   decorate: (editor, pattern) ->
-    [startRow, endRow] = editor.getVisibleRowRange().map (row) ->
-      editor.bufferRowForScreenRow(row)
-    scanRange = new Range([startRow, 0], [endRow, Infinity])
-
     markers = []
     @scan editor, pattern, (range) =>
-      marker = editor.markScreenRange range,
+      markers.push editor.markScreenRange range,
         invalidate: 'never'
         persistent: false
-      markers.push marker
 
     for marker in markers
       editor.decorateMarker marker,
@@ -71,43 +64,55 @@ module.exports =
 
   scan: (editor, pattern, callback) ->
     [firstVisibleRow, lastVisibleRow] = editor.getVisibleRowRange()
-    for row in [firstVisibleRow...lastVisibleRow]
-      if editor.isFoldedAtScreenRow(row)
-        continue
-        # callback new Range(new Point(row, 0), new Point(row, 0))
+    for row in [firstVisibleRow..lastVisibleRow]
+      continue if editor.isFoldedAtScreenRow(row)
       lineText = editor.lineTextForScreenRow row
       while match = pattern.exec lineText
         start = [row, match.index]
-        end = [row, match.index + match[0].length]
+        end   = [row, match.index + match[0].length]
         callback [start, end]
 
-  # collectPoints: (editor, pattern) ->
-  #   points = []
-  #   [firstVisibleRow, lastVisibleRow] = editor.getVisibleRowRange()
-  #   for row in [firstVisibleRow...lastVisibleRow]
-  #     if editor.isFoldedAtScreenRow(row)
-  #       callback new Range(new Point(row, 0), new Point(row, 0))
-  #       # points.push
-  #     else
-  #       lineContents = editor.lineTextForScreenRow row
-  #       while match = pattern.exec(lineContents)
-  #         points.push new Point(row, match.index)
-  #   points
-  #
   showLabel: ->
-    labels = @getLabels()
-    @labelElements = []
+    @labels = []
     for editor in @getVisibleEditor()
-      container = new Container().initialize(editor)
-      editorView = atom.views.getView(editor)
-      for marker in @markersByEditorID[editor.id]
-        labelElement = new Label().initialize {editorView, marker}
-        container.appendChild labelElement
-        @labelElements.push labelElement
+      container = new Container()
+      container.initialize(editor)
       @containers.push container
 
-    @label2target = @assignLabel labels, @labelElements
+      editorView = atom.views.getView(editor)
+      markers = @markersByEditorID[editor.id]
+      for marker in markers
+        label = new Label()
+        label.initialize {editorView, marker}
+        container.appendChild label
+        @labels.push label
+
+    @label2target = @assignLabel @getLabelChars(), @labels
     @setLabel @label2target
+
+  assignLabel: (labelChars, targets) ->
+    groups = {}
+    firstLabel = labelChars[0]
+    targets = targets.slice()
+    _labelChars = @getLabelChars()
+    while (_targets = targets.splice(0, _labelChars.length)).length
+      group = {}
+      i = 0
+      while _targets[0]?
+        group[_labelChars[i]] = _targets.shift()
+        i++
+      groups[labelChars.shift()] = group
+
+    if Object.keys(groups).length is 1
+      groups = groups[firstLabel]
+    groups
+
+  setLabel: (label2target, _label=false) ->
+    for label, elem of label2target
+      if _.isElement elem
+        elem.setLabelText (_label or label)
+      else
+        @setLabel elem, label
 
   getTarget: (label) ->
     label = label.toUpperCase()
@@ -116,57 +121,24 @@ module.exports =
       target.jump()
       @clear()
     else
-      for elem in @labelElements when elem.textContent isnt label
+      for elem in @labels when elem.getLabelText() isnt label
         elem.destroy()
       @label2target = target
       @setLabel target
 
-  setLabel: (label2target, _label=false) ->
-    for label, elem of label2target
-      if _.isElement elem
-        # elem.textContent = (_label or label)
-        elem.setLabel (_label or label)
-      else
-        @setLabel  elem, label
-
-  assignLabel: (labels, targets) ->
-    groups = {}
-    firstLabel = labels[0]
-    targets = targets.slice()
-    _labels = @getLabels()
-    while (_targets = targets.splice(0, _labels.length)).length
-      group = {}
-      i = 0
-      while _targets[0]?
-        group[_labels[i]] = _targets.shift()
-        i++
-      groups[labels.shift()] = group
-
-    if Object.keys(groups).length is 1
-      groups = groups[firstLabel]
-    groups
-
-  # Others
-  # -------------------------
   clear: ->
-    for editor in @getVisibleEditor()
-      @clearDecoration editor
+    label.destroy() for label in @labels
+    container.destroy() for container in @containers
 
-    for label, element of @label2target
-      element.remove()
-
-    @label2target = null
-    for container in @containers
-      container.destroy()
+    @labels = []
     @containers = []
+    @label2target = {}
 
-  # Utility
-  # -------------------------
   getVisibleEditor: ->
     editors = atom.workspace.getPanes()
       .map    (pane)   -> pane.getActiveEditor()
       .filter (editor) -> editor?
     editors
 
-  getLabels: ->
+  getLabelChars: ->
     settings.get('labelChars').split('')

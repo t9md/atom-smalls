@@ -1,23 +1,24 @@
 {CompositeDisposable} = require 'atom'
 _ = require 'underscore-plus'
 settings = require './settings'
+
 class Input extends HTMLElement
   createdCallback: ->
     @hiddenPanels = []
     @classList.add 'smalls-input'
-    @editorContainer = document.createElement('div')
-    @editorContainer.className = 'editor-container'
-    @appendChild @editorContainer
+    @container = document.createElement('div')
+    @container.className = 'editor-container'
+    @appendChild @container
 
   initialize: (@main) ->
+    @mode = null
     @editorView = document.createElement 'atom-text-editor'
     @editorView.classList.add('editor', 'smalls')
     @editorView.getModel().setMini(true)
     @editorView.setAttribute('mini', '')
-    @editorContainer.appendChild @editorView
+    @container.appendChild @editorView
     @editor = @editorView.getModel()
 
-    @defaultText = ''
     @panel = atom.workspace.addBottomPanel item: this, visible: false
     atom.commands.add @editorView, 'core:confirm', @startJumpMode.bind(this)
     atom.commands.add @editorView, 'core:cancel' , @cancel.bind(this)
@@ -25,23 +26,21 @@ class Input extends HTMLElement
     @handleInput()
     this
 
+  focus: ->
+    @hideOtherBottomPanels()
+    @panel.show()
+    @editorView.focus()
+    @setMode 'search'
+
+  # mode should be one of 'search' or 'jump'.
   setMode: (mode) ->
     if @mode?
       @editorView.classList.remove @mode
     @mode = mode
-    @editorView.classList.add(@mode)
+    @editorView.classList.add @mode
 
   getMode: ->
     @mode
-
-  isJumpMode: ->
-    @getMode() is 'jump'
-
-  focus: ->
-    @setMode 'search'
-    @hideOtherBottomPanels()
-    @panel.show()
-    @editorView.focus()
 
   hideOtherBottomPanels: ->
     @hiddenPanels = []
@@ -58,14 +57,11 @@ class Input extends HTMLElement
     @panel.destroy()
     @remove()
 
-  getText: ->
-    @editor.getText()
-
   handleInput: ->
     @subscriptions = subs = new CompositeDisposable
 
     subs.add @editor.onWillInsertText ({text, cancel}) =>
-      if @isJumpMode()
+      if @getMode() is 'jump'
         cancel()
         @main.getTarget text
 

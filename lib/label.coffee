@@ -9,8 +9,11 @@ class Label extends HTMLElement
     @position     = @marker["get#{labelPosition}BufferPosition"]()
     this
 
-  setLabel: (label) ->
+  setLabelText: (label) ->
     @textContent = label
+
+  getLabelText: ->
+    @textContent
 
   flash: ->
     marker = @marker.copy()
@@ -31,7 +34,7 @@ class Label extends HTMLElement
       @editor.selectToBufferPosition @position
     else
       @editor.setCursorBufferPosition @position
-    @flash() if settings.get('flashOnLand')
+    @flash() if settings.get 'flashOnLand'
 
   attachedCallback: ->
     px          = @editorView.pixelPositionForBufferPosition @position
@@ -46,7 +49,7 @@ class Label extends HTMLElement
 
 class Container extends HTMLElement
   initialize: (editor) ->
-    @classList.add 'smalls', 'smalls-label-container'
+    @classList.add 'smalls', 'label-container'
     editorView = atom.views.getView editor
     @overlayer = editorView.shadowRoot.querySelector('content[select=".overlayer"]')
     @overlayer.appendChild this
@@ -54,14 +57,10 @@ class Container extends HTMLElement
   destroy: ->
     @remove()
 
-LabelElement = document.registerElement 'smalls-label',
-  prototype: Label.prototype
-  extends:   'div'
-
-ContainerElement = document.registerElement 'smalls-label-container',
-  prototype: Container.prototype
-  extends:   'div'
-
 module.exports =
-  Label: LabelElement
-  Container: ContainerElement
+  Label: document.registerElement 'smalls-label',
+    prototype: Label.prototype
+    extends:   'div'
+  Container: document.registerElement 'smalls-label-container',
+    prototype: Container.prototype
+    extends:   'div'

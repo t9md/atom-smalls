@@ -12,6 +12,8 @@ Rapid cursor positioning across any visible chars with search and jump.
 * [easymotion](https://github.com/easymotion/vim-easymotion) style label jump.
 * Port of my [vim-smalls](https://github.com/t9md/vim-smalls/blob/master/README.md).
 * Can choose where label is shown from 'start' and 'end' of matching text.
+* Can onfigure label characters.
+* Showing **Capital letter label** to standout and your input automatically upcased when finding matching label.
 
 # How to use
 
