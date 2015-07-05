@@ -1,5 +1,5 @@
 {CompositeDisposable} = require 'atom'
-_ = require 'underscore-plus'
+# _ = require 'underscore-plus'
 settings = require './settings'
 
 class Input extends HTMLElement
@@ -20,7 +20,7 @@ class Input extends HTMLElement
     @editor = @editorView.getModel()
 
     @panel = atom.workspace.addBottomPanel item: this, visible: false
-    atom.commands.add @editorView, 'core:confirm', @startJumpMode.bind(this)
+    atom.commands.add @editorView, 'core:confirm', @jump.bind(this)
     atom.commands.add @editorView, 'core:cancel' , @cancel.bind(this)
     atom.commands.add @editorView, 'blur'        , @cancel.bind(this)
     @handleInput()
@@ -31,6 +31,41 @@ class Input extends HTMLElement
     @panel.show()
     @editorView.focus()
     @setMode 'search'
+
+  cancel: (e) ->
+    @main.clear()
+    @editor.setText ''
+    @showOtherBottomPanels()
+    atom.workspace.getActivePane().activate()
+    @panel.hide()
+
+  handleInput: ->
+    @subscriptions = subs = new CompositeDisposable
+    wildChar = settings.get('wildChar')
+    subs.add @editor.onWillInsertText ({text, cancel}) =>
+      if @getMode() is 'jump'
+        cancel()
+        @main.getTarget text
+
+      # Prevent wildChar as firstChar goes infinite searching.
+      if @editor.isEmpty() and text is wildChar
+        cancel()
+
+
+    subs.add @editor.onDidChange =>
+      text = @editor.getText()
+      @main.search text
+      jumpTriggerInputLength = settings.get 'jumpTriggerInputLength'
+      if jumpTriggerInputLength and (text.length >= jumpTriggerInputLength)
+        @jump()
+
+    subs.add @editor.onDidDestroy =>
+      subs.dispose()
+
+  jump: ->
+    return if @editor.isEmpty()
+    @setMode 'jump'
+    @main.showLabel()
 
   # mode should be one of 'search' or 'jump'.
   setMode: (mode) ->
@@ -55,37 +90,8 @@ class Input extends HTMLElement
 
   destroy: ->
     @panel.destroy()
+    @subscriptions.dispose()
     @remove()
-
-  handleInput: ->
-    @subscriptions = subs = new CompositeDisposable
-
-    subs.add @editor.onWillInsertText ({text, cancel}) =>
-      if @getMode() is 'jump'
-        cancel()
-        @main.getTarget text
-
-    subs.add @editor.onDidChange =>
-      text = @editor.getText()
-      @main.search text
-      jumpTriggerInputLength = settings.get 'jumpTriggerInputLength'
-      if jumpTriggerInputLength and (text.length >= jumpTriggerInputLength)
-        @startJumpMode()
-
-    subs.add @editor.onDidDestroy =>
-      @subscriptions.dispose()
-
-  startJumpMode: ->
-    return if @editor.isEmpty()
-    @setMode 'jump'
-    @main.showLabel()
-
-  cancel: (e) ->
-    @main.clear()
-    @editor.setText ''
-    @showOtherBottomPanels()
-    atom.workspace.getActivePane().activate()
-    @panel.hide()
 
 module.exports =
 document.registerElement 'smalls-input',

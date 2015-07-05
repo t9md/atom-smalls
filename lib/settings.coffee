@@ -16,6 +16,11 @@ module.exports = new ConfigPlus 'smalls',
     minimum: 0
     default: 0
     description: "0 means disable. If input exceed this length, automatically start jump mode"
+  wildChar:
+    order: 4
+    type:  'string'
+    default: ''
+    description: "set one length char, it treted `.*` equivalent e.g. `*`"
   flashOnLand:
     order:   32
     type:    'boolean'

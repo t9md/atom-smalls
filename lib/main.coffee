@@ -12,32 +12,40 @@ module.exports =
   activate: ->
     {Label, Container} = require './label'
     Input = require './input'
+    @input = new Input()
+    @input.initialize(this)
 
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-workspace',
       'smalls:start': => @start()
 
     @subscriptions.add atom.commands.add 'atom-text-editor.smalls.search',
-      'smalls:jump': => @getInput()?.startJumpMode()
+      'smalls:jump': => @input.jump()
+
 
   deactivate: ->
     @clear()
     @subscriptions.dispose()
-
-  getInput: ->
-    @input
 
   start: ->
     @markersByEditorID = {}
     @containers        = []
     @label2target      = {}
     @labels            = []
-
-    @input ?= new Input().initialize(this)
     @input.focus()
 
+  getRegExp: (text) ->
+    if wildChar = settings.get('wildChar')
+      pattern = text.split(wildChar).map (pattern) ->
+        _.escapeRegExp(pattern)
+      .join('.*')
+    else
+      pattern = _.escapeRegExp(text)
+
+    ///#{pattern}///ig
+
   search: (text) ->
-    pattern = ///#{_.escapeRegExp(text)}///ig
+    pattern = @getRegExp text
     for editor in @getVisibleEditor()
       @clearDecoration editor
       if text isnt ''
@@ -116,7 +124,8 @@ module.exports =
 
   getTarget: (label) ->
     label = label.toUpperCase()
-    return unless target = @label2target[label]
+    target = @label2target[label]
+    return unless target
     if _.isElement target
       target.jump()
       @clear()
