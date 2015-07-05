@@ -3,7 +3,7 @@ settings = require './settings'
 
 class Label extends HTMLElement
   initialize: ({@editorView, @marker}) ->
-    @classList.add 'smalls', 'label'
+    @classList.add 'smalls-label'
     @editor       = @editorView.getModel()
     labelPosition = _.capitalize settings.get('labelPosition')
     @position     = @marker["get#{labelPosition}BufferPosition"]()
@@ -22,7 +22,7 @@ class Label extends HTMLElement
 
     decoration = @editor.decorateMarker marker,
       type: 'highlight'
-      class: "smalls-flash"
+      class: 'smalls-flash'
 
     setTimeout  ->
       decoration.getMarker().destroy()

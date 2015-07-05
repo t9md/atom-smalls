@@ -58,7 +58,7 @@ module.exports =
     for marker in markers
       editor.decorateMarker marker,
         type: 'highlight'
-        class: 'smalls-candidates'
+        class: 'smalls-candidate'
 
     @markersByEditorID[editor.id] = markers
 

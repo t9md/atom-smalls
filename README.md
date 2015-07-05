@@ -59,12 +59,8 @@ You can customzize label style in `style.less`.
 e.g.
 
 ```less
-atom-text-editor::shadow {
-  .smalls {
-    &.label {
-      background-color: @background-color-success;
-    }
-  }
+atom-text-editor::shadow .smalls-label {
+  background-color: @background-color-error;
 }
 ```
 
