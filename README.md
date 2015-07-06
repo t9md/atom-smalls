@@ -14,6 +14,7 @@ Rapid cursor positioning across any visible chars with search and jump.
 * Can choose where label is shown from 'start' and 'end' of matching text.
 * Can onfigure label characters.
 * Showing **Capital letter label** to standout and your input automatically upcased when finding matching label.
+* Efficient labeling strategy to reduce key type and brain context switch.
 
 # How to use
 
@@ -63,6 +64,41 @@ atom-text-editor::shadow .smalls-label {
   background-color: @background-color-error;
 }
 ```
+
+# Labels Chars and supported candidates
+
+`labelChars` define set of character to be used as label.  
+Number of label characters limit number of accommodate matching candidates.  
+So question is how many candidates this labelChars accommodate?
+Formula is bellow(`L` means `labelChars.length`).
+
+* `Candidates = (L x L) x (L * L)`
+
+e.g.
+
+| labelChars | Formula             | Candidates |
+| ---------- | ------------------- | ---------- |
+| `AB`       | `(2 * 2) * (2 * 2)` | 16         |
+| `ABC`      | `(3 * 3) * (3 * 3)` | 81         |
+| `ABCD`     | `(4 * 4) * (4 * 4)` | 256        |
+
+# Labeling strategy
+
+Currently label will nest to two level depending on number of candidates.  
+* one = one character label(e.g. `A`)
+* two = two character label(e.g. `AB`)
+* L1 = level1, 1st layer label.
+* L2 = level2, 2nd layer label.
+
+Label appear L1 > L2 order.
+
+Depending on number of candidates, labeling strategy is determined by following order
+
+1. `L1 = one`
+2. `L1 = two`
+3. `L1 = one, L2 = two`
+4. `L1 = two, L2 = two`
+
 
 # Similar packages
 

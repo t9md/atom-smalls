@@ -85,21 +85,43 @@ module.exports =
         container.appendChild label
         @labels.push label
 
-    @labelChar2target = @assignLabel @getLabelChars(), @labels
+    @labelChar2target = @assignLabelChar @labels
     @setLabel @labelChar2target
 
-  assignLabel: (labelChars, targets) ->
+  # assignLabel: (targets) ->
+  #   labelChars = @getLabelChars(1)
+  #   if targets.length > labelChars.length
+  #     labelChars = @getLabelChars(2)
+  #   groups = {}
+  #   for target in targets
+  #     groups[labelChars.shift()] = target
+  #   groups
+
+  getLabelCharsForLabels: (labels) ->
+    one = @getLabelChars(1)
+    two = @getLabelChars(2)
+    if labels.length <= one.length
+      [L1, L2] = [one, one.slice()]
+    else if labels.length <= (one.length * two.length)
+      [L1, L2] = [one, two]
+    else if labels.length <= (two.length * two.length)
+      [L1, L2] = [two, two.slice()]
+    else
+      throw "need increase LabelChars"
+    [L1, L2]
+
+  assignLabelChar: (labels) ->
+    [L1, L2] = @getLabelCharsForLabels(labels)
     groups = {}
-    firstLabel = labelChars[0]
-    targets = targets.slice()
-    _labelChars = @getLabelChars()
-    while (_targets = targets.splice(0, _labelChars.length)).length
+    firstLabel = L1[0]
+    labels = labels.slice()
+    while (_labels = labels.splice(0, L2.length)).length
       group = {}
       i = 0
-      while _targets[0]?
-        group[_labelChars[i]] = _targets.shift()
+      while _labels[0]?
+        group[L2[i]] = _labels.shift()
         i++
-      groups[labelChars.shift()] = group
+      groups[L1.shift()] = group
 
     if Object.keys(groups).length is 1
       groups = groups[firstLabel]
@@ -113,17 +135,26 @@ module.exports =
         @setLabel elem, label
 
   getTarget: (labelChar) ->
+    sufficientlabelCharLength = _.first(_.keys(@labelChar2target)).length
     labelChar = labelChar.toUpperCase()
     target = @labelChar2target[labelChar]
-    return unless target
     if _.isElement target
-      target.jump()
-      @clear()
-    else
-      for elem in @labels when elem.getLabelText() isnt labelChar
-        elem.destroy()
+      return target
+
+    pattern = ///^#{_.escapeRegExp(labelChar)}///
+    labels = []
+    for label in @labels
+      if pattern.test label.getLabelText()
+        labels.push label
+      else
+        label.destroy()
+
+    if labelChar.length >= sufficientlabelCharLength
+      @input.labelChar = ''
+      @labels = labels
       @labelChar2target = target
       @setLabel target
+    null
 
   clearLabels: ->
     for label in @labels
@@ -134,7 +165,6 @@ module.exports =
     @clearLabels()
     for container in @containers
       container.destroy()
-
     @labels = []
     @containers = []
     @labelChar2target = {}
@@ -145,5 +175,14 @@ module.exports =
       .filter (editor) -> editor?
     editors
 
-  getLabelChars: ->
-    settings.get('labelChars').split('')
+  getLabelChars: (num=1) ->
+    labelChars = settings.get('labelChars').split('')
+    if num is 1
+      labelChars
+    else if num is 2
+      _labelChars = []
+      for labelCharA in labelChars
+        for labelCharB in labelChars
+          # _labelChars.push labelCharA + labelCharB
+          _labelChars.push labelCharB + labelCharA
+      _labelChars

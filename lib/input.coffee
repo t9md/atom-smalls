@@ -31,6 +31,7 @@ class Input extends HTMLElement
     @hideOtherBottomPanels()
     @panel.show()
     @setMode 'search'
+    @labelChar = ''
     @editorView.focus()
 
   cancel: (e) ->
@@ -45,10 +46,14 @@ class Input extends HTMLElement
     subs.add @editor.onWillInsertText ({text, cancel}) =>
       if @getMode() is 'jump'
         cancel()
-        @main.getTarget text
+        @labelChar += text
+        if target = @main.getTarget @labelChar
+          target.jump()
+          @labelChar = ''
 
     subs.add @editor.onDidChange =>
       if @getMode() is 'jump'
+        labelChar = ''
         @main.clearLabels()
         @setMode 'search'
       text = @editor.getText()

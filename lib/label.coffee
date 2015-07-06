@@ -54,6 +54,7 @@ class Container extends HTMLElement
     @overlayer = editorView.shadowRoot.querySelector('content[select=".overlayer"]')
     @overlayer.appendChild this
     this
+    
   destroy: ->
     @remove()
 
