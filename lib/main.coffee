@@ -8,7 +8,7 @@ Input     = null
 
 module.exports =
   config: settings.config
-  
+
   activate: ->
     {Label, Container} = require './label'
     Input = require './input'
@@ -35,12 +35,12 @@ module.exports =
 
   search: (text) ->
     pattern = ///#{text}///ig
-    for editor in @getVisibleEditor()
-      @clearDecoration editor
+    for editor in @getVisibleEditors()
+      @clearDecorations editor
       if text isnt ''
         @decorate editor, pattern
 
-  clearDecoration: (editor) ->
+  clearDecorations: (editor) ->
     if markers = @markersByEditorID[editor.id]
       for marker in markers
         marker.destroy()
@@ -62,6 +62,7 @@ module.exports =
   scan: (editor, pattern, callback) ->
     [firstVisibleRow, lastVisibleRow] = editor.getVisibleRowRange()
     for row in [firstVisibleRow..lastVisibleRow]
+      # Skip folded line.
       continue if editor.isFoldedAtScreenRow(row)
       lineText = editor.lineTextForScreenRow row
       while match = pattern.exec lineText
@@ -71,12 +72,12 @@ module.exports =
 
   showLabel: ->
     @labels = []
-    for editor in @getVisibleEditor()
+    for editor in @getVisibleEditors()
       container = new Container()
-      container.initialize(editor)
+      container.initialize editor
       @containers.push container
 
-      editorView = atom.views.getView(editor)
+      editorView = atom.views.getView editor
       markers = @markersByEditorID[editor.id]
       for marker in markers
         label = new Label()
@@ -124,15 +125,21 @@ module.exports =
       @label2target = target
       @setLabel target
 
+  clearLabels: ->
+    for label in @labels
+      label.destroy()
+    @labels = []
+
   clear: ->
-    label.destroy() for label in @labels
-    container.destroy() for container in @containers
+    @clearLabels()
+    for container in @containers
+      container.destroy()
 
     @labels = []
     @containers = []
     @label2target = {}
 
-  getVisibleEditor: ->
+  getVisibleEditors: ->
     editors = atom.workspace.getPanes()
       .map    (pane)   -> pane.getActiveEditor()
       .filter (editor) -> editor?
