@@ -8,13 +8,15 @@ Rapid cursor positioning across any visible chars with search and jump.
 
 * Search and jump to position across visible panes.
 * Flashing cursor position on landing(enbaled by default).
-* Automatically start jump-mode with configured input length.
+* Automatically start jump-mode with configured input length(disabled by default).
 * [easymotion](https://github.com/easymotion/vim-easymotion) style label jump.
 * Port of my [vim-smalls](https://github.com/t9md/vim-smalls/blob/master/README.md).
-* Can choose where label is shown from 'start' and 'end' of matching text.
-* Can onfigure label characters.
+* Can choose label display position from 'start' or 'end' of matching text.
+* Can configure label characters(two chars required at minimum).
+* Heuristically determine appropriate number of label to use.
+* Change label color to indicate if its final choice(blue is final choice).
+* `line-through` decided label char for two chars label.
 * Showing **Capital letter label** to standout and your input automatically upcased when finding matching label.
-* Efficient labeling strategy to reduce key type and brain context switch.
 
 # How to use
 
@@ -43,62 +45,47 @@ e.g.
   ';': 'smalls:jump'
 ```
 
-* My setting, I'm [vim-mode](https://atom.io/packages/vim-mode) user.
-NOTE `;` is bound to `vim-mode:repeat-find`, very important command.
-So If you follow my keymap, you'd better assign `vim-mode:repeat-find` to other
-keybind.
+My setting, I'm [vim-mode](https://atom.io/packages/vim-mode) user.  
 
 ```coffeescript
 'atom-text-editor.vim-mode.command-mode':
   ';': 'smalls:start'
 ```
+`;` is key for `vim-mode:repeat-find` in vim-mode.  
+If you follow my keymap, assign it to other keymap.
 
 # Customizing label style
 
-You can customzize label style in `style.less`.
+You can customize label style in `style.less`.
 
 e.g.
 
 ```less
 atom-text-editor::shadow .smalls-label {
   background-color: @background-color-error;
+  &.final {
+    background-color: @background-color-info;
+  }
 }
 ```
 
-# Labels Chars and supported candidates
-
-`labelChars` define set of character to be used as label.  
-Number of label characters limit number of accommodate matching candidates.  
-So question is how many candidates this labelChars accommodate?
-Formula is bellow(`L` means `labelChars.length`).
-
-* `Candidates = (L x L) x (L * L)`
-
-e.g.
-
-| labelChars | Formula             | Candidates |
-| ---------- | ------------------- | ---------- |
-| `AB`       | `(2 * 2) * (2 * 2)` | 16         |
-| `ABC`      | `(3 * 3) * (3 * 3)` | 81         |
-| `ABCD`     | `(4 * 4) * (4 * 4)` | 256        |
-
 # Labeling strategy
 
-Currently label will nest to two level depending on number of candidates.  
-* one = one character label(e.g. `A`)
-* two = two character label(e.g. `AB`)
-* L1 = level1, 1st layer label.
-* L2 = level2, 2nd layer label.
+smalls chose appropriate label chars depending on number of candidate.
+Strategy is as following.
 
-Label appear L1 > L2 order.
+1. One char label is sufficient, use one char label.
+2. Two char label is sufficient, use two char label.
+3. If two char label is not enough, use two char label *multiple* time and narrow and redraw label if it reached final candidates.
 
-Depending on number of candidates, labeling strategy is determined by following order
+# Label color
 
-1. `L1 = one`
-2. `L1 = two`
-3. `L1 = one, L2 = two`
-4. `L1 = two, L2 = two`
-
+While choosing label, our eye fixed to final destination position and not noticed how much other candidate are there.  
+So sometimes its frustrating when just after you chose label, re-appear another label to further narrowing candidate.  
+To minimize this surprise, smalls make this distinguishable by CSS class(color).  
+If label is unique(means, same label is **NOT** used multiple time), it means **final** choice.  
+In this case label element have `final` CSS class.  
+And by default it set different color than non-final label.  
 
 # Similar packages
 
@@ -123,12 +110,20 @@ IntelliJ
 
 # TODO
 
+* [ ] Bounce animation on choice(CSS animation?)
+* [ ] Unlock scroll cursor with hotkey?
+* [ ] Narrowing based on grammar scope?
+* [ ] If start with selection, only search selected area?
+* [ ] Special command to put multiple cursor to candidate?
+* [ ] Special command to mutate candidate like upcase, downcase, camelcase, etc..
+* [ ] Start with setting candidate when selection is not multi-line.
+* [ ] When started with multi-line selection, search only within selection.
 * [x] Use panel to read input from user
 * [x] Customizable label style
 * [x] Refactoring especially `Input` view.
-* [ ] Better labeling algorithm to support more than 2 level nested label.
-* [ ] Unlock scroll cursor with hotkey?
-* [ ] Narrowing based on grammar scope?
+* [x] Better labeling algorithm to support more than 2 level nested label.
+* [x] Change label color on final choice
+* [x] Indicate first char is decided on two char label.
 
 # Thanks to great predecessor!!
 My smalls work is based following work.

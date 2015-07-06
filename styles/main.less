@@ -4,12 +4,18 @@ atom-text-editor::shadow {
   .smalls-label {
     z-index: 2147483647;
     color: @text-color-selected;
-    background-color: @background-color-info;
+    background-color: @background-color-error;
     border-radius: @component-border-radius;
     position: absolute;
     padding: 0.15em;
     margin-left: -2px;
     margin-top: -2px;
+    &.final {
+      background-color: @background-color-info;
+    }
+    span.decided {
+      text-decoration: line-through;
+    }
   }
   .smalls-candidate .region {
     background-color: transparent;

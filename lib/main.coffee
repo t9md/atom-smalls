@@ -19,9 +19,6 @@ module.exports =
     @subscriptions.add atom.commands.add 'atom-workspace',
       'smalls:start': => @start()
 
-    @subscriptions.add atom.commands.add 'atom-text-editor.smalls.search',
-      'smalls:jump': => @input.jump()
-
   deactivate: ->
     @clear()
     @subscriptions.dispose()
@@ -29,7 +26,6 @@ module.exports =
   start: ->
     @markersByEditorID = {}
     @containers        = []
-    @labelChar2target  = {}
     @labels            = []
     @input.focus()
 
@@ -76,7 +72,6 @@ module.exports =
       container = new Container()
       container.initialize editor
       @containers.push container
-
       editorView = atom.views.getView editor
       markers = @markersByEditorID[editor.id]
       for marker in markers
@@ -85,75 +80,52 @@ module.exports =
         container.appendChild label
         @labels.push label
 
-    @labelChar2target = @assignLabelChar @labels
-    @setLabel @labelChar2target
+    @setLabel @labels
 
-  # assignLabel: (targets) ->
-  #   labelChars = @getLabelChars(1)
-  #   if targets.length > labelChars.length
-  #     labelChars = @getLabelChars(2)
-  #   groups = {}
-  #   for target in targets
-  #     groups[labelChars.shift()] = target
-  #   groups
+  setLabel: (labels) ->
+    labelChars = @getLabelChars(1)
+    if labels.length > labelChars.length
+      labelChars = @getLabelChars(2)
 
-  getLabelCharsForLabels: (labels) ->
-    one = @getLabelChars(1)
-    two = @getLabelChars(2)
-    if labels.length <= one.length
-      [L1, L2] = [one, one.slice()]
-    else if labels.length <= (one.length * two.length)
-      [L1, L2] = [one, two]
-    else if labels.length <= (two.length * two.length)
-      [L1, L2] = [two, two.slice()]
+    if labels.length <= labelChars.length
+      for label in labels
+        label.setLabelText labelChars.shift()
+        label.setFinal()
     else
-      throw "need increase LabelChars"
-    [L1, L2]
+      n = Math.ceil(labels.length / labelChars.length)
+      _labelChars = []
+      _.times n, ->
+        _labelChars = _labelChars.concat(labelChars)
+      labelChars = _labelChars
 
-  assignLabelChar: (labels) ->
-    [L1, L2] = @getLabelCharsForLabels(labels)
-    groups = {}
-    firstLabel = L1[0]
-    labels = labels.slice()
-    while (_labels = labels.splice(0, L2.length)).length
-      group = {}
-      i = 0
-      while _labels[0]?
-        group[L2[i]] = _labels.shift()
-        i++
-      groups[L1.shift()] = group
+      usedCount = {}
+      for label in labels
+        labelText = labelChars.shift()
+        label.setLabelText labelText
+        usedCount[labelText] ?= 0
+        usedCount[labelText] += 1
 
-    if Object.keys(groups).length is 1
-      groups = groups[firstLabel]
-    groups
-
-  setLabel: (labelChar2target, _label=false) ->
-    for label, elem of labelChar2target
-      if _.isElement elem
-        elem.setLabelText (_label or label)
-      else
-        @setLabel elem, label
+      for label in labels when usedCount[label.getLabelText()] is 1
+          label.setFinal()
 
   getTarget: (labelChar) ->
-    sufficientlabelCharLength = _.first(_.keys(@labelChar2target)).length
     labelChar = labelChar.toUpperCase()
-    target = @labelChar2target[labelChar]
-    if _.isElement target
-      return target
-
     pattern = ///^#{_.escapeRegExp(labelChar)}///
-    labels = []
-    for label in @labels
-      if pattern.test label.getLabelText()
-        labels.push label
-      else
-        label.destroy()
+    matched = _.filter @labels, (label) ->
+      label.match(pattern)
 
-    if labelChar.length >= sufficientlabelCharLength
-      @input.labelChar = ''
-      @labels = labels
-      @labelChar2target = target
-      @setLabel target
+    unless matched.length
+      @input.cancel()
+      return
+
+    # Since all label char lenth is same, if there is one full matched label,
+    # can assume all labels are full matched.
+    if _.detect(matched, (label) -> label.isFullMatch())
+      if matched.length is 1
+        return matched.shift()
+      else
+        @input.reset()
+        @setLabel(@labels = matched)
     null
 
   clearLabels: ->
@@ -167,7 +139,6 @@ module.exports =
       container.destroy()
     @labels = []
     @containers = []
-    @labelChar2target = {}
 
   getVisibleEditors: ->
     editors = atom.workspace.getPanes()
@@ -175,6 +146,8 @@ module.exports =
       .filter (editor) -> editor?
     editors
 
+  # Return array of label.
+  # Label char is one char(e.g. 'A'), or two char(e.g. 'AA').
   getLabelChars: (num=1) ->
     labelChars = settings.get('labelChars').split('')
     if num is 1
@@ -183,6 +156,5 @@ module.exports =
       _labelChars = []
       for labelCharA in labelChars
         for labelCharB in labelChars
-          # _labelChars.push labelCharA + labelCharB
-          _labelChars.push labelCharB + labelCharA
+          _labelChars.push labelCharA + labelCharB
       _labelChars

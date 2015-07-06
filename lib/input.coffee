@@ -19,8 +19,12 @@ class Input extends HTMLElement
     @editor = @editorView.getModel()
     @panel = atom.workspace.addBottomPanel item: this, visible: false
 
-    atom.commands.add @editorView,
+    @subscriptions = new CompositeDisposable
+    @subscriptions.add atom.commands.add 'atom-text-editor.smalls.search',
+      'smalls:jump':  => @jump()
       'core:confirm': => @jump()
+
+    @subscriptions.add atom.commands.add @editorView,
       'core:cancel':  => @cancel()
       'blur':         => @cancel()
 
@@ -31,8 +35,10 @@ class Input extends HTMLElement
     @hideOtherBottomPanels()
     @panel.show()
     @setMode 'search'
-    @labelChar = ''
     @editorView.focus()
+
+  reset: ->
+    @labelChar = ''
 
   cancel: (e) ->
     @main.clear()
@@ -49,12 +55,9 @@ class Input extends HTMLElement
         @labelChar += text
         if target = @main.getTarget @labelChar
           target.jump()
-          @labelChar = ''
 
     subs.add @editor.onDidChange =>
       if @getMode() is 'jump'
-        labelChar = ''
-        @main.clearLabels()
         @setMode 'search'
       text = @editor.getText()
       @main.search text
@@ -68,14 +71,21 @@ class Input extends HTMLElement
   jump: ->
     return if @editor.isEmpty()
     @setMode 'jump'
-    @main.showLabel()
 
   # mode should be one of 'search' or 'jump'.
   setMode: (mode) ->
+    return if mode is @mode
     if @mode?
       @editorView.classList.remove @mode
     @mode = mode
     @editorView.classList.add @mode
+
+    switch @mode
+      when 'search'
+        @main.clearLabels()
+        @reset()
+      when 'jump'
+        @main.showLabel()
 
   getMode: ->
     @mode

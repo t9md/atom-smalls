@@ -5,6 +5,7 @@ module.exports = new ConfigPlus 'smalls',
     order:   1
     type:    'string'
     default: ';ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    description: "Lower case char not supported"
   labelPosition:
     order:   2
     type:    'string'

@@ -1,3 +1,11 @@
+## 0.1.5 - Improve
+- Refactoring.
+- Doc update.
+- Better labeling strategy.
+- Support more than infinite label nesting(was max two level).
+- Indicate partial match for two char label.
+- Change label color to indicate its final choice or not.
+
 ## 0.1.4 - Improve, FIX
 - [FIX] need escape RegExp
 - Rename variables
