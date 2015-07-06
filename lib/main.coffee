@@ -29,12 +29,12 @@ module.exports =
   start: ->
     @markersByEditorID = {}
     @containers        = []
-    @label2target      = {}
+    @labelChar2target  = {}
     @labels            = []
     @input.focus()
 
   search: (text) ->
-    pattern = ///#{text}///ig
+    pattern = ///#{_.escapeRegExp(text)}///ig
     for editor in @getVisibleEditors()
       @clearDecorations editor
       if text isnt ''
@@ -46,24 +46,24 @@ module.exports =
         marker.destroy()
 
   decorate: (editor, pattern) ->
-    markers = []
-    @scan editor, pattern, (range) =>
-      markers.push editor.markScreenRange range,
+    @markersByEditorID[editor.id] = markers = []
+    @scan editor, pattern, (range) ->
+      marker = editor.markScreenRange range,
         invalidate: 'never'
         persistent: false
 
-    for marker in markers
       editor.decorateMarker marker,
         type: 'highlight'
         class: 'smalls-candidate'
 
-    @markersByEditorID[editor.id] = markers
+      markers.push marker
 
   scan: (editor, pattern, callback) ->
     [firstVisibleRow, lastVisibleRow] = editor.getVisibleRowRange()
     for row in [firstVisibleRow..lastVisibleRow]
       # Skip folded line.
       continue if editor.isFoldedAtScreenRow(row)
+
       lineText = editor.lineTextForScreenRow row
       while match = pattern.exec lineText
         start = [row, match.index]
@@ -85,8 +85,8 @@ module.exports =
         container.appendChild label
         @labels.push label
 
-    @label2target = @assignLabel @getLabelChars(), @labels
-    @setLabel @label2target
+    @labelChar2target = @assignLabel @getLabelChars(), @labels
+    @setLabel @labelChar2target
 
   assignLabel: (labelChars, targets) ->
     groups = {}
@@ -105,24 +105,24 @@ module.exports =
       groups = groups[firstLabel]
     groups
 
-  setLabel: (label2target, _label=false) ->
-    for label, elem of label2target
+  setLabel: (labelChar2target, _label=false) ->
+    for label, elem of labelChar2target
       if _.isElement elem
         elem.setLabelText (_label or label)
       else
         @setLabel elem, label
 
-  getTarget: (label) ->
-    label = label.toUpperCase()
-    target = @label2target[label]
+  getTarget: (labelChar) ->
+    labelChar = labelChar.toUpperCase()
+    target = @labelChar2target[labelChar]
     return unless target
     if _.isElement target
       target.jump()
       @clear()
     else
-      for elem in @labels when elem.getLabelText() isnt label
+      for elem in @labels when elem.getLabelText() isnt labelChar
         elem.destroy()
-      @label2target = target
+      @labelChar2target = target
       @setLabel target
 
   clearLabels: ->
@@ -137,7 +137,7 @@ module.exports =
 
     @labels = []
     @containers = []
-    @label2target = {}
+    @labelChar2target = {}
 
   getVisibleEditors: ->
     editors = atom.workspace.getPanes()

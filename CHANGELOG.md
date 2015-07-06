@@ -1,3 +1,7 @@
+## 0.1.4 - Improve, FIX
+- [FIX] need escape RegExp
+- Rename variables
+
 ## 0.1.3 - Improve
 - Now can switch from jump-mode to search-mode when onDidChange when you edit text like `ctrl-h`.
 
