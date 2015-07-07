@@ -2,7 +2,7 @@
 
 Rapid cursor positioning across any visible chars with search and jump.
 
-![gif](https://raw.githubusercontent.com/t9md/t9md/27897f4b49bc518da19940593f120d774c2c22cc/img/atom-smalls.gif)
+![gif](https://raw.githubusercontent.com/t9md/t9md/9e2b924427829d0264841dbf211858629dd0e7d3/img/atom-smalls.gif)
 
 # Features
 
