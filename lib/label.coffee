@@ -10,7 +10,6 @@ class Label extends HTMLElement
 
     @appendChild (@char1 = document.createElement 'span')
     @appendChild (@char2 = document.createElement 'span')
-    # @fullMatch = false
     this
 
   attachedCallback: ->

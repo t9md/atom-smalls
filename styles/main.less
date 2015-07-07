@@ -3,13 +3,13 @@
 atom-text-editor::shadow {
   .smalls-label {
     z-index: 2147483647;
+    position: absolute;
     color: @text-color-selected;
     background-color: @background-color-error;
     border-radius: @component-border-radius;
-    position: absolute;
-    padding: 0.15em;
-    margin-left: -2px;
-    margin-top: -2px;
+    box-shadow: 0px 0px 10px @syntax-text-color;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
     &.final {
       background-color: @background-color-info;
     }

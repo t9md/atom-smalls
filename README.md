@@ -62,6 +62,7 @@ e.g.
 
 ```less
 atom-text-editor::shadow .smalls-label {
+  box-shadow: 0px 0px 10px @text-color;
   background-color: @background-color-error;
   &.final {
     background-color: @background-color-info;

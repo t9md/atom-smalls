@@ -1,3 +1,6 @@
+## 0.1.6 - Style improve
+- Padding, box-shadow, no-margin.
+
 ## 0.1.5 - Improve
 - Refactoring.
 - Doc update.
