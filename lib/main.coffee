@@ -32,14 +32,10 @@ module.exports =
   search: (text) ->
     pattern = ///#{_.escapeRegExp(text)}///ig
     for editor in @getVisibleEditors()
-      @clearDecorations editor
-      if text isnt ''
-        @decorate editor, pattern
-
-  clearDecorations: (editor) ->
-    if markers = @markersByEditorID[editor.id]
-      for marker in markers
+      for marker in @markersByEditorID[editor.id] ? []
         marker.destroy()
+      if text # if not empyt.
+        @decorate editor, pattern
 
   decorate: (editor, pattern) ->
     @markersByEditorID[editor.id] = markers = []
@@ -67,7 +63,7 @@ module.exports =
         callback [start, end]
 
   showLabel: ->
-    @labels = []
+    labels = []
     for editor in @getVisibleEditors()
       container = new Container()
       container.initialize editor
@@ -78,9 +74,9 @@ module.exports =
         label = new Label()
         label.initialize {editorView, marker}
         container.appendChild label
-        @labels.push label
+        labels.push label
 
-    @setLabel @labels
+    @setLabel(@labels = labels)
 
   setLabel: (labels) ->
     labelChars = @getLabelChars(1)
@@ -93,10 +89,10 @@ module.exports =
         label.setFinal()
     else
       n = Math.ceil(labels.length / labelChars.length)
-      _labelChars = []
+      _labelChars = labelChars.slice()
+      labelChar = []
       _.times n, ->
-        _labelChars = _labelChars.concat(labelChars)
-      labelChars = _labelChars
+        labelChars = labelChars.concat(_labelChars)
 
       usedCount = {}
       for label in labels
@@ -106,7 +102,7 @@ module.exports =
         usedCount[labelText] += 1
 
       for label in labels when usedCount[label.getLabelText()] is 1
-          label.setFinal()
+        label.setFinal()
 
   getTarget: (labelChar) ->
     labelChar = labelChar.toUpperCase()
@@ -137,8 +133,8 @@ module.exports =
     @clearLabels()
     for container in @containers
       container.destroy()
-    @labels = []
     @containers = []
+    @markersByEditorID = {}
 
   getVisibleEditors: ->
     editors = atom.workspace.getPanes()
