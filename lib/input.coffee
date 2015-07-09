@@ -27,6 +27,7 @@ class Input extends HTMLElement
     @subscriptions.add atom.commands.add @editorView,
       'core:cancel': => @cancel()
       'blur':        => @cancel()
+      'click':       => @cancel()
 
     @handleInput()
     this

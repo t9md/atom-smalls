@@ -16,7 +16,7 @@ Rapid cursor positioning across any visible chars with search and jump.
 * Heuristically determine appropriate number of label to use.
 * Change label color to indicate if its final choice(blue is final choice).
 * `line-through` decided label char for two chars label.
-* Showing **Capital letter label** to standout and your input automatically upcased when finding matching label.
+* Showing **Capital letter label** to standout and you can input lowercase char to chose.
 
 # How to use
 
@@ -39,7 +39,7 @@ e.g.
   'ctrl-;': 'smalls:start'
 
 # Optional.
-# By this setting we can speedily start jump with minimal hand movement.  
+# By this setting you can speedily start jump with minimal finger movement.  
 # Limitation: You can't search `;` itself with smalls..
 'atom-text-editor.smalls.search':
   ';': 'smalls:jump'
@@ -53,6 +53,8 @@ My setting, I'm [vim-mode](https://atom.io/packages/vim-mode) user.
 ```
 `;` is key for `vim-mode:repeat-find` in vim-mode.  
 If you follow my keymap, assign it to other keymap.
+
+and setting labelChars to `;AWEFJIO`
 
 # Customizing label style
 
@@ -72,17 +74,17 @@ atom-text-editor::shadow .smalls-label {
 
 # Labeling strategy
 
-smalls chose appropriate label chars depending on number of candidate.
+smalls chose appropriate label chars depending on number of candidates.
 Strategy is as following.
 
 1. One char label is sufficient, use one char label.
 2. Two char label is sufficient, use two char label.
-3. If two char label is not enough, use two char label *multiple* time and narrow and redraw label if it reached final candidates.
+3. If two char label is not enough, use two char label *multiple* time and redraw label by your choice until it reached final candidates.
 
 # Label color
 
-While choosing label, our eye fixed to final destination position and not noticed how much other candidate are there.  
-So sometimes its frustrating when just after you chose label, re-appear another label to further narrowing candidate.  
+While choosing label, our eye usually be fixed to final destination position and not noticed how many other candidates are there.  
+So sometimes its frustrating when just after you chose label, re-appear another label to further narrowing candidates.  
 To minimize this surprise, smalls make this distinguishable by CSS class(color).  
 If label is unique(means, same label is **NOT** used multiple time), it means **final** choice.  
 In this case label element have `final` CSS class.  
@@ -111,7 +113,7 @@ IntelliJ
 
 # TODO
 
-* [ ] Bounce animation on choice(CSS animation?)
+* [ ] Bouncing animation on choice(CSS animation?)
 * [ ] Unlock scroll cursor with hotkey?
 * [ ] Narrowing based on grammar scope?
 * [ ] If start with selection, only search selected area?

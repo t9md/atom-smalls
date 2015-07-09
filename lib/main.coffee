@@ -131,6 +131,9 @@ module.exports =
 
   clear: ->
     @clearLabels()
+    for editorID, markers of @markersByEditorID
+      for marker in markers
+        marker.destroy()
     for container in @containers
       container.destroy()
     @containers = []

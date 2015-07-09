@@ -1,4 +1,4 @@
-## [PRE] 0.1.7 - Refactoring
+## 0.1.7 - Refactoring
 - Cleanup code.
 
 ## 0.1.6 - Style improve
