@@ -1,3 +1,6 @@
+## 0.1.8 - Refactoring
+- Update readme to follow vim-mode's rename from command-mode to normal-mode
+
 ## 0.1.7 - Refactoring
 - Cleanup code.
 

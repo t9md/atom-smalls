@@ -48,7 +48,7 @@ e.g.
 My setting, I'm [vim-mode](https://atom.io/packages/vim-mode) user.  
 
 ```coffeescript
-'atom-text-editor.vim-mode.command-mode':
+'atom-text-editor.vim-mode.normal-mode':
   ';': 'smalls:start'
 ```
 `;` is key for `vim-mode:repeat-find` in vim-mode.  
