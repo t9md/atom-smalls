@@ -2,13 +2,11 @@
 _ = require 'underscore-plus'
 settings = require './settings'
 
-Label     = null
+Label = null
 Container = null
-Input     = null
+Input = null
 
 module.exports =
-  config: settings.config
-
   activate: ->
     {Label, Container} = require './label'
     Input = require './input'

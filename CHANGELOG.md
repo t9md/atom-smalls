@@ -1,3 +1,7 @@
+## 0.1.9
+- Fix: #2 Workaround upstream Atom bug. setting view not appear from Atom v1.4.0.
+- Remove dependency to atom-config-plus module.
+
 ## 0.1.8 - Refactoring
 - Update readme to follow vim-mode's rename from command-mode to normal-mode
 
