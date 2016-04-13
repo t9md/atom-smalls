@@ -3,7 +3,6 @@ settings = require './settings'
 
 class Input extends HTMLElement
   createdCallback: ->
-    @hiddenPanels = []
     @classList.add 'smalls-input'
     @container = document.createElement 'div'
     @container.className = 'editor-container'
@@ -33,7 +32,6 @@ class Input extends HTMLElement
     this
 
   focus: ->
-    @hideOtherBottomPanels()
     @panel.show()
     @setMode 'search'
     @editorView.focus()
@@ -45,7 +43,6 @@ class Input extends HTMLElement
     @main.clear()
     @editor.setText ''
     @panel.hide()
-    @showOtherBottomPanels()
     atom.workspace.getActivePane().activate()
 
   handleInput: ->
@@ -66,7 +63,7 @@ class Input extends HTMLElement
       if jumpTriggerInputLength and (text.length >= jumpTriggerInputLength)
         @jump()
 
-    subs.add @editor.onDidDestroy =>
+    subs.add @editor.onDidDestroy ->
       subs.dispose()
 
   jump: ->
@@ -90,17 +87,6 @@ class Input extends HTMLElement
 
   getMode: ->
     @mode
-
-  hideOtherBottomPanels: ->
-    @hiddenPanels = []
-    for panel in atom.workspace.getBottomPanels()
-      if panel.isVisible()
-        panel.hide()
-        @hiddenPanels.push panel
-
-  showOtherBottomPanels: ->
-    panel.show() for panel in @hiddenPanels
-    @hiddenPanels = []
 
   destroy: ->
     @panel.destroy()
