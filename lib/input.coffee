@@ -54,7 +54,7 @@ class Input extends HTMLElement
       if @getMode() is 'jump'
         cancel()
         @labelChar += text
-        if label = @main.getTargetLabel(@labelChar)
+        if label = @main.findLabel(@labelChar)
           label.land()
 
     subs.add @editor.onDidChange =>

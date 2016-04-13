@@ -5,7 +5,6 @@ getView = (model) ->
   atom.views.getView(model)
 
 getVisibleBufferRange = (editor) ->
-  # console.log editor
   [startRow, endRow] = getView(editor).getVisibleRowRange()
   return null unless (startRow? and endRow?)
   startRow = editor.bufferRowForScreenRow(startRow)

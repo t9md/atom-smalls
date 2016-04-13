@@ -73,7 +73,7 @@ module.exports =
     for label in labels when usedCount[label.getLabelText()] is 1
       label.setFinal()
 
-  getTargetLabel: (labelChar) ->
+  finLabel: (labelChar) ->
     labelChar = labelChar.toUpperCase()
     pattern = ///^#{_.escapeRegExp(labelChar)}///
     matched = _.filter @labels, (label) ->
