@@ -2,10 +2,18 @@ _ = require 'underscore-plus'
 settings = require './settings'
 
 class Label extends HTMLElement
-  initialize: ({@editorElement, @marker}) ->
-    @overlayMarker = null
+  editor: null
+  editorElement: null
+  marker: null
+  overlayMarker: null
+  fullMatch: false
+  char1: null
+  char2: null
+
+  initialize: ({@editor, @marker}) ->
     @className = 'smalls-label'
-    @editor = @editorElement.getModel()
+    @editorElement = atom.views.getView(@editor)
+    @overlayMarker = null
 
     @appendChild(@char1 = document.createElement 'span')
     @appendChild(@char2 = document.createElement 'span')
@@ -16,11 +24,10 @@ class Label extends HTMLElement
 
   match: (pattern) ->
     labelText = @getLabelText()
-    if m = pattern.exec labelText
-      # Partial match
-      if m[0].length < labelText.length
+    if match = pattern.exec(labelText)
+      if match[0].length < labelText.length
         @char1.className = 'decided'
-      else if m[0].length is labelText.length
+      else if match[0].length is labelText.length
         @fullMatch = true
       true
     else
@@ -36,48 +43,45 @@ class Label extends HTMLElement
     @textContent
 
   setFinal: ->
-    @classList.add 'final'
+    @classList.add('final')
 
   show: ->
-    labelPosition = _.capitalize settings.get('labelPosition')
-    @position = @marker["get#{labelPosition}BufferPosition"]()
-    @overlayMarker = @createOverlay(@position)
+    point = @marker.getBufferRange()[settings.get('labelPosition')]
+    @overlayMarker = @createOverlay(point)
 
   createOverlay: (point) ->
-    editor = @editorElement.getModel()
-    marker = editor.markBufferPosition point,
-      invalidate: "never",
-      persistent: false
-
-    decoration = editor.decorateMarker marker,
-      type: 'overlay'
-      item: this
+    marker = @editor.markBufferPosition(point, {invalidate: "never", persistent: false})
+    @editor.decorateMarker(marker, {type: 'overlay', item: this})
     marker
 
-  jump: ->
+  land: ->
     atom.workspace.paneForItem(@editor).activate()
+    point = @marker.getStartBufferPosition()
     if (@editor.getSelections().length is 1) and (not @editor.getLastSelection().isEmpty())
-      @editor.selectToBufferPosition @position
+      @editor.selectToBufferPosition(point)
     else
-      @editor.setCursorBufferPosition @position
-    @flash() if settings.get 'flashOnLand'
+      @editor.setCursorBufferPosition(point)
+    if settings.get('flashOnLand')
+      @flash()
 
   flash: ->
     marker = @marker.copy()
     if settings.get('flashType') is 'word'
-      marker.setBufferRange @editor.getLastCursor().getCurrentWordBufferRange()
+      range = @editor.getLastCursor().getCurrentWordBufferRange()
+      marker.setBufferRange(range)
 
-    decoration = @editor.decorateMarker marker,
-      type: 'highlight'
-      class: 'smalls-flash'
-
+    @editor.decorateMarker(marker, {type: 'highlight', class: 'smalls-flash'})
     setTimeout  ->
-      decoration.getMarker().destroy()
+      marker.destroy()
     , 150
 
   destroy: ->
     @marker.destroy()
     @overlayMarker?.destroy()
+
+    #   @editor, @editorElement, @marker, @overlayMarker, @fullMatch
+    #   @char1, @char2
+    # } = {}
     @remove()
 
 module.exports = document.registerElement 'smalls-label',

@@ -1,7 +1,7 @@
 {CompositeDisposable, Range} = require 'atom'
 _ = require 'underscore-plus'
 settings = require './settings'
-{getView, getVisibleEditors, decorateRanges, getRangesForText} = require './utils'
+{getVisibleEditors, decorateRanges, getRangesForText} = require './utils'
 
 Label = null
 Input = null
@@ -39,41 +39,41 @@ module.exports =
   showLabel: ->
     labels = []
     @markersByEditor.forEach (markers, editor) ->
-      editorElement = getView(editor)
       for marker in markers ? []
-        label = new Label().initialize({editorElement, marker})
+        label = new Label().initialize({editor, marker})
         label.show()
         labels.push(label)
+    @setLabelChar(labels)
 
-    @setLabel(@labels = labels)
-
-  setLabel: (labels) ->
-    labelChars = @getLabelChars(1)
-    if labels.length > labelChars.length
-      labelChars = @getLabelChars(2)
-
-    if labels.length <= labelChars.length
-      for label in labels
-        label.setLabelText labelChars.shift()
-        label.setFinal()
+  # Return enough amount of label chars to show amount
+  # Label char is one char(e.g. 'A'), or two char(e.g. 'AA').
+  getLabelChars: (amount) ->
+    labelChars = settings.get('labelChars').split('')
+    if amount <= labelChars.length
+      # one char label
+      labelChars
     else
-      n = Math.ceil(labels.length / labelChars.length)
-      _labelChars = labelChars.slice()
-      labelChar = []
-      _.times n, ->
-        labelChars = labelChars.concat(_labelChars)
+      # two char label
+      _labels = []
+      for a in labelChars
+        for b in labelChars
+          _labels.push(a + b)
+      layers = Math.ceil(amount / _labels.length)
+      _.flatten([1..layers].map -> _labels)
 
-      usedCount = {}
-      for label in labels
-        labelText = labelChars.shift()
-        label.setLabelText labelText
-        usedCount[labelText] ?= 0
-        usedCount[labelText] += 1
+  setLabelChar: (@labels) ->
+    labelChars = @getLabelChars(@labels.length)
+    usedCount = {}
+    for label in @labels
+      labelText = labelChars.shift()
+      label.setLabelText(labelText)
+      usedCount[labelText] ?= 0
+      usedCount[labelText] += 1
 
-      for label in labels when usedCount[label.getLabelText()] is 1
-        label.setFinal()
+    for label in labels when usedCount[label.getLabelText()] is 1
+      label.setFinal()
 
-  getTarget: (labelChar) ->
+  getTargetLabel: (labelChar) ->
     labelChar = labelChar.toUpperCase()
     pattern = ///^#{_.escapeRegExp(labelChar)}///
     matched = _.filter @labels, (label) ->
@@ -83,11 +83,9 @@ module.exports =
       @input.cancel()
       return
 
-    # Since all label char lenth is same, if there is one full matched label,
-    # can assume all labels are full matched.
     if _.detect(matched, (label) -> label.isFullMatch())
       if matched.length is 1
-        return matched.shift()
+        return(matched.shift())
       else
         @input.reset()
         @setLabel(@labels = matched)
@@ -100,16 +98,3 @@ module.exports =
   clear: ->
     @clearLabels()
     @clearAllMarkers()
-
-  # Return array of label.
-  # Label char is one char(e.g. 'A'), or two char(e.g. 'AA').
-  getLabelChars: (num=1) ->
-    labelChars = settings.get('labelChars').split('')
-    if num is 1
-      labelChars
-    else if num is 2
-      _labelChars = []
-      for labelCharA in labelChars
-        for labelCharB in labelChars
-          _labelChars.push labelCharA + labelCharB
-      _labelChars

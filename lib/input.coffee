@@ -20,7 +20,7 @@ class Input extends HTMLElement
 
   initialize: (@main) ->
     @mode = null
-    @panel = atom.workspace.addBottomPanel item: this, visible: false
+    @panel = atom.workspace.addBottomPanel(item: this, visible: false)
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-text-editor.smalls.search',
       'smalls:jump': => @jump()
@@ -54,8 +54,8 @@ class Input extends HTMLElement
       if @getMode() is 'jump'
         cancel()
         @labelChar += text
-        if target = @main.getTarget @labelChar
-          target.jump()
+        if label = @main.getTargetLabel(@labelChar)
+          label.land()
 
     subs.add @editor.onDidChange =>
       if @getMode() is 'jump'
