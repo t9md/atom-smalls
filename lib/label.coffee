@@ -2,22 +2,14 @@ _ = require 'underscore-plus'
 settings = require './settings'
 
 class Label extends HTMLElement
-  initialize: ({@editorView, @marker}) ->
+  initialize: ({@editorElement, @marker}) ->
+    @overlayMarker = null
     @classList.add 'smalls-label'
-    @editor       = @editorView.getModel()
-    labelPosition = _.capitalize settings.get('labelPosition')
-    @position     = @marker["get#{labelPosition}BufferPosition"]()
+    @editor = @editorElement.getModel()
 
     @appendChild (@char1 = document.createElement 'span')
     @appendChild (@char2 = document.createElement 'span')
     this
-
-  attachedCallback: ->
-    px          = @editorView.pixelPositionForBufferPosition @position
-    top         = px.top - @editor.getScrollTop()
-    left        = px.left - @editor.getScrollLeft()
-    @style.top  = top + 'px'
-    @style.left = left + 'px'
 
   isFullMatch: ->
     @fullMatch
@@ -46,6 +38,22 @@ class Label extends HTMLElement
   setFinal: ->
     @classList.add 'final'
 
+  show: ->
+    labelPosition = _.capitalize settings.get('labelPosition')
+    @position = @marker["get#{labelPosition}BufferPosition"]()
+    @overlayMarker = @createOverlay(@position)
+
+  createOverlay: (point) ->
+    editor = @editorElement.getModel()
+    marker = editor.markBufferPosition point,
+      invalidate: "never",
+      persistent: false
+
+    decoration = editor.decorateMarker marker,
+      type: 'overlay'
+      item: this
+    marker
+
   jump: ->
     atom.workspace.paneForItem(@editor).activate()
     if (@editor.getSelections().length is 1) and (not @editor.getLastSelection().isEmpty())
@@ -69,23 +77,9 @@ class Label extends HTMLElement
 
   destroy: ->
     @marker.destroy()
+    @overlayMarker?.destroy()
     @remove()
 
-class Container extends HTMLElement
-  initialize: (editor) ->
-    @classList.add 'smalls', 'label-container'
-    editorView = atom.views.getView editor
-    @overlayer = editorView.shadowRoot.querySelector('content[select=".overlayer"]')
-    @overlayer.appendChild this
-    this
-
-  destroy: ->
-    @remove()
-
-module.exports =
-  Label: document.registerElement 'smalls-label',
-    prototype: Label.prototype
-    extends:   'div'
-  Container: document.registerElement 'smalls-label-container',
-    prototype: Container.prototype
-    extends:   'div'
+module.exports = document.registerElement 'smalls-label',
+  prototype: Label.prototype
+  extends:   'div'

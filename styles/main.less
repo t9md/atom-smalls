@@ -2,14 +2,16 @@
 @import "syntax-variables";
 atom-text-editor, atom-text-editor::shadow {
   .smalls-label {
-    z-index: 2147483647;
-    position: absolute;
-    color: @text-color-selected;
-    background-color: @background-color-error;
+    display: block;
+    color: @text-color-highlight;
+    background-color: @base-background-color;
     border-radius: @component-border-radius;
-    box-shadow: 0px 0px 10px @syntax-text-color;
+    box-shadow: 0 0 10px @syntax-text-color;
     padding-left: 0.2em;
     padding-right: 0.2em;
+    margin-left: -0.1em;
+    margin-top: -2.5em;
+    text-align: center;
     &.final {
       background-color: @background-color-info;
     }

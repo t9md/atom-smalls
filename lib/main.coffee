@@ -3,12 +3,11 @@ _ = require 'underscore-plus'
 settings = require './settings'
 
 Label = null
-Container = null
 Input = null
 
 module.exports =
   activate: ->
-    {Label, Container} = require './label'
+    Label = require './label'
     Input = require './input'
     @input = new Input()
     @input.initialize(this)
@@ -23,7 +22,6 @@ module.exports =
 
   start: ->
     @markersByEditor = new Map
-    @containers = []
     @labels = []
     @input.focus()
 
@@ -64,16 +62,13 @@ module.exports =
   showLabel: ->
     labels = []
     for editor in @getVisibleEditors()
-      container = new Container()
-      container.initialize editor
-      @containers.push container
-      editorView = atom.views.getView editor
+      editorElement = atom.views.getView editor
       markers = @markersByEditor.get(editor)
       for marker in markers
         label = new Label()
-        label.initialize {editorView, marker}
-        container.appendChild label
-        labels.push label
+        label.initialize({editorElement, marker})
+        label.show()
+        labels.push(label)
 
     @setLabel(@labels = labels)
 
@@ -132,9 +127,6 @@ module.exports =
     @clearLabels()
     @markersByEditor.forEach (markers) ->
       marker.destroy() for marker in markers
-    for container in @containers
-      container.destroy()
-    @containers = []
     @markersByEditor.clear()
 
   getVisibleEditors: ->
