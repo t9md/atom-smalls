@@ -1,6 +1,7 @@
 {CompositeDisposable, Range} = require 'atom'
 _ = require 'underscore-plus'
 settings = require './settings'
+{getView, getVisibleEditors, decorateRanges, getRangesForText} = require './utils'
 
 Label = null
 Input = null
@@ -9,64 +10,38 @@ module.exports =
   activate: ->
     Label = require './label'
     Input = require './input'
-    @input = new Input()
-    @input.initialize(this)
+    @input = new Input().initialize(this)
+
+    @markersByEditor = new Map
+    @labels = []
 
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-text-editor',
-      'smalls:start': => @start()
+      'smalls:start': => @input.focus()
 
   deactivate: ->
     @clear()
     @subscriptions.dispose()
 
-  start: ->
-    @markersByEditor = new Map
-    @labels = []
-    @input.focus()
-
-  search: (text) ->
+  clearAllMarkers: ->
     @markersByEditor.forEach (markers) ->
       marker.destroy() for marker in markers
-    pattern = ///#{_.escapeRegExp(text)}///ig
-    for editor in @getVisibleEditors()
-      if text # if not empyt.
-        @decorate editor, pattern
+    @markersByEditor.clear()
 
-  decorate: (editor, pattern) ->
-    markers = []
-    @scan editor, pattern, (range) ->
-      marker = editor.markScreenRange range,
-        invalidate: 'never'
-        persistent: false
-
-      editor.decorateMarker marker,
-        type: 'highlight'
-        class: 'smalls-candidate'
-
-      markers.push marker
-    @markersByEditor.set(editor, markers)
-
-  scan: (editor, pattern, callback) ->
-    [firstVisibleRow, lastVisibleRow] = editor.getVisibleRowRange()
-    for row in [firstVisibleRow..lastVisibleRow]
-      # Skip folded line.
-      continue if editor.isFoldedAtScreenRow(row)
-
-      lineText = editor.lineTextForScreenRow row
-      while match = pattern.exec lineText
-        start = [row, match.index]
-        end = [row, match.index + match[0].length]
-        callback [start, end]
+  search: (text) ->
+    @clearAllMarkers()
+    return unless text
+    for editor in getVisibleEditors()
+      ranges = getRangesForText(editor, text)
+      if (markers = decorateRanges(editor, ranges)).length
+        @markersByEditor.set(editor, markers)
 
   showLabel: ->
     labels = []
-    for editor in @getVisibleEditors()
-      editorElement = atom.views.getView editor
-      markers = @markersByEditor.get(editor)
-      for marker in markers
-        label = new Label()
-        label.initialize({editorElement, marker})
+    @markersByEditor.forEach (markers, editor) ->
+      editorElement = getView(editor)
+      for marker in markers ? []
+        label = new Label().initialize({editorElement, marker})
         label.show()
         labels.push(label)
 
@@ -119,21 +94,12 @@ module.exports =
     null
 
   clearLabels: ->
-    for label in @labels
-      label.destroy()
+    label.destroy() for label in @labels
     @labels = []
 
   clear: ->
     @clearLabels()
-    @markersByEditor.forEach (markers) ->
-      marker.destroy() for marker in markers
-    @markersByEditor.clear()
-
-  getVisibleEditors: ->
-    editors = atom.workspace.getPanes()
-      .map    (pane)   -> pane.getActiveEditor()
-      .filter (editor) -> editor?
-    editors
+    @clearAllMarkers()
 
   # Return array of label.
   # Label char is one char(e.g. 'A'), or two char(e.g. 'AA').

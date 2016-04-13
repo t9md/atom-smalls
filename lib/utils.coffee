@@ -1,3 +1,40 @@
+{Range} = require 'atom'
+_ = require 'underscore-plus'
+
+getView = (model) ->
+  atom.views.getView(model)
+
+getVisibleBufferRange = (editor) ->
+  # console.log editor
+  [startRow, endRow] = getView(editor).getVisibleRowRange()
+  return null unless (startRow? and endRow?)
+  startRow = editor.bufferRowForScreenRow(startRow)
+  endRow = editor.bufferRowForScreenRow(endRow)
+  new Range([startRow, 0], [endRow, Infinity])
+
+getRangesForText = (editor, text) ->
+  ranges = []
+  pattern = ///#{_.escapeRegExp(text)}///ig
+  scanRange = getVisibleBufferRange(editor)
+  editor.scanInBufferRange pattern, scanRange, ({range}) ->
+    ranges.push(range)
+  ranges
+
+markerOptions = {invalidate: 'never', persistent: false}
+decorateOptions = {type: 'highlight', class: 'smalls-candidate'}
+decorateRanges = (editor, ranges) ->
+  markers = []
+  for range in ranges ? []
+    marker = editor.markScreenRange(range, markerOptions)
+    editor.decorateMarker(marker, decorateOptions)
+    markers.push(marker)
+  markers
+
+getVisibleEditors = ->
+  atom.workspace.getPanes()
+    .map (pane) -> pane.getActiveEditor()
+    .filter (editor) -> editor?
+
 ElementBuilder =
   includeInto: (target) ->
     for name, value of this when name isnt "includeInto"
@@ -23,5 +60,10 @@ ElementBuilder =
     element
 
 module.exports = {
+  getView
+  getRangesForText
+  decorateRanges
   ElementBuilder
+  getVisibleBufferRange
+  getVisibleEditors
 }
