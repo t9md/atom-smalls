@@ -14,7 +14,7 @@ module.exports =
     @input.initialize(this)
 
     @subscriptions = new CompositeDisposable
-    @subscriptions.add atom.commands.add 'atom-workspace',
+    @subscriptions.add atom.commands.add 'atom-text-editor',
       'smalls:start': => @start()
 
   deactivate: ->
@@ -22,21 +22,21 @@ module.exports =
     @subscriptions.dispose()
 
   start: ->
-    @markersByEditorID = {}
-    @containers        = []
-    @labels            = []
+    @markersByEditor = new Map
+    @containers = []
+    @labels = []
     @input.focus()
 
   search: (text) ->
+    @markersByEditor.forEach (markers) ->
+      marker.destroy() for marker in markers
     pattern = ///#{_.escapeRegExp(text)}///ig
     for editor in @getVisibleEditors()
-      for marker in @markersByEditorID[editor.id] ? []
-        marker.destroy()
       if text # if not empyt.
         @decorate editor, pattern
 
   decorate: (editor, pattern) ->
-    @markersByEditorID[editor.id] = markers = []
+    markers = []
     @scan editor, pattern, (range) ->
       marker = editor.markScreenRange range,
         invalidate: 'never'
@@ -47,6 +47,7 @@ module.exports =
         class: 'smalls-candidate'
 
       markers.push marker
+    @markersByEditor.set(editor, markers)
 
   scan: (editor, pattern, callback) ->
     [firstVisibleRow, lastVisibleRow] = editor.getVisibleRowRange()
@@ -57,7 +58,7 @@ module.exports =
       lineText = editor.lineTextForScreenRow row
       while match = pattern.exec lineText
         start = [row, match.index]
-        end   = [row, match.index + match[0].length]
+        end = [row, match.index + match[0].length]
         callback [start, end]
 
   showLabel: ->
@@ -67,7 +68,7 @@ module.exports =
       container.initialize editor
       @containers.push container
       editorView = atom.views.getView editor
-      markers = @markersByEditorID[editor.id]
+      markers = @markersByEditor.get(editor)
       for marker in markers
         label = new Label()
         label.initialize {editorView, marker}
@@ -129,13 +130,12 @@ module.exports =
 
   clear: ->
     @clearLabels()
-    for editorID, markers of @markersByEditorID
-      for marker in markers
-        marker.destroy()
+    @markersByEditor.forEach (markers) ->
+      marker.destroy() for marker in markers
     for container in @containers
       container.destroy()
     @containers = []
-    @markersByEditorID = {}
+    @markersByEditor.clear()
 
   getVisibleEditors: ->
     editors = atom.workspace.getPanes()
