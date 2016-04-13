@@ -4,11 +4,11 @@ settings = require './settings'
 class Label extends HTMLElement
   initialize: ({@editorElement, @marker}) ->
     @overlayMarker = null
-    @classList.add 'smalls-label'
+    @className = 'smalls-label'
     @editor = @editorElement.getModel()
 
-    @appendChild (@char1 = document.createElement 'span')
-    @appendChild (@char2 = document.createElement 'span')
+    @appendChild(@char1 = document.createElement 'span')
+    @appendChild(@char2 = document.createElement 'span')
     this
 
   isFullMatch: ->

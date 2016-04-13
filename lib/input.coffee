@@ -1,40 +1,43 @@
 {CompositeDisposable} = require 'atom'
+{ElementBuilder} = require './utils'
 settings = require './settings'
 
 class Input extends HTMLElement
+  ElementBuilder.includeInto(this)
+
   createdCallback: ->
-    @classList.add 'smalls-input'
-    @container = document.createElement 'div'
-    @container.className = 'editor-container'
-    @appendChild @container
+    @className = 'smalls-input'
+    @appendChild(
+      @container = @div
+        classList: ['editor-container']
+    ).appendChild(
+      @editorElement = @atomTextEditor
+        classList: ['editor', 'smalls']
+        attribute: {mini: ''}
+    )
+    @editor = @editorElement.getModel()
+    @editor.setMini(true)
 
   initialize: (@main) ->
     @mode = null
-    @editorView = document.createElement 'atom-text-editor'
-    @editorView.classList.add 'editor', 'smalls'
-    @editorView.getModel().setMini true
-    @editorView.setAttribute 'mini', ''
-    @container.appendChild @editorView
-    @editor = @editorView.getModel()
     @panel = atom.workspace.addBottomPanel item: this, visible: false
-
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-text-editor.smalls.search',
-      'smalls:jump':  => @jump()
+      'smalls:jump': => @jump()
       'core:confirm': => @jump()
 
-    @subscriptions.add atom.commands.add @editorView,
+    @subscriptions.add atom.commands.add @editorElement,
       'core:cancel': => @cancel()
-      'blur':        => @cancel()
-      'click':       => @cancel()
+      'blur': => @cancel()
+      'click': => @cancel()
 
     @handleInput()
     this
 
   focus: ->
     @panel.show()
-    @setMode 'search'
-    @editorView.focus()
+    @setMode('search')
+    @editorElement.focus()
 
   reset: ->
     @labelChar = ''
@@ -74,9 +77,9 @@ class Input extends HTMLElement
   setMode: (mode) ->
     return if mode is @mode
     if @mode?
-      @editorView.classList.remove @mode
+      @editorElement.classList.remove @mode
     @mode = mode
-    @editorView.classList.add @mode
+    @editorElement.classList.add @mode
 
     switch @mode
       when 'search'
