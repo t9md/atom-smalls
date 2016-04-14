@@ -1,7 +1,7 @@
 {
   "name": "smalls",
   "main": "./lib/main",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "Rapid cursor positioning across any visible chars with search and jump.",
   "activationCommands": {
     "atom-workspace": [
