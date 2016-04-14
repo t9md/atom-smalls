@@ -1,3 +1,11 @@
+## 0.2.0
+- Completely rewritten
+ - use native overlay marker
+ - remove settings.coffee
+ - extract many functions as utils.coffee
+ - Input communicate with main through emitting event
+ - Tweak style
+
 ## 0.1.9
 - Fix: #2 Workaround upstream Atom bug. setting view not appear from Atom v1.4.0.
 - Remove dependency to atom-config-plus module.
