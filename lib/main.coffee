@@ -45,50 +45,47 @@ module.exports =
         labels.push(label)
     @setLabelChar(labels)
 
-  # Return enough amount of label chars to show amount
+  # Return enough amount of label chars to show specified amount of label.
   # Label char is one char(e.g. 'A'), or two char(e.g. 'AA').
   getLabelChars: (amount) ->
     labelChars = settings.get('labelChars').split('')
-    if amount <= labelChars.length
-      # one char label
-      labelChars
-    else
-      # two char label
+    if amount <= labelChars.length # one char label
+      labelChars[0...amount]
+    else # two char label
       _labels = []
       for a in labelChars
         for b in labelChars
           _labels.push(a + b)
       layers = Math.ceil(amount / _labels.length)
-      _.flatten([1..layers].map -> _labels)
+      _.flatten([1..layers].map -> _labels)[0...amount]
 
   setLabelChar: (@labels) ->
     labelChars = @getLabelChars(@labels.length)
-    usedCount = {}
+    usedCount = _.countBy(labelChars.slice(), (text) -> text)
     for label in @labels
-      labelText = labelChars.shift()
-      label.setLabelText(labelText)
-      usedCount[labelText] ?= 0
-      usedCount[labelText] += 1
+      text = labelChars.shift()
+      label.setLabelText(text, usedCount[text])
 
-    for label in labels when usedCount[label.getLabelText()] is 1
-      label.setFinal()
+  findLabel: (labelChar) ->
+    [matched, unMatched] = _.partition @labels, (label) ->
+      label.getText().startsWith(labelChar)
 
-  finLabel: (labelChar) ->
-    labelChar = labelChar.toUpperCase()
-    pattern = ///^#{_.escapeRegExp(labelChar)}///
-    matched = _.filter @labels, (label) ->
-      label.match(pattern)
+    label.destroy() for label in unMatched
 
-    unless matched.length
-      @input.cancel()
-      return
+    fullMatched = []
+    for label in matched
+      labelText = label.getText()
+      if labelChar.length < labelText.length
+        label.char1.className = 'decided'
+      else
+        fullMatched.push(label)
 
-    if _.detect(matched, (label) -> label.isFullMatch())
-      if matched.length is 1
-        return(matched.shift())
+    if fullMatched.length > 0
+      if fullMatched.length is 1
+        return fullMatched.shift()
       else
         @input.reset()
-        @setLabel(@labels = matched)
+        @setLabelChar(fullMatched)
     null
 
   clearLabels: ->

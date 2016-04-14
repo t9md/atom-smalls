@@ -22,7 +22,7 @@
       "order": 1,
       "type": "string",
       "default": ";ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      "description": "Lower case characters are not supported"
+      "description": "Always be matched with case insensitive"
     },
     "labelPosition": {
       "order": 2,

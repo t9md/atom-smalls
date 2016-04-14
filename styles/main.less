@@ -1,31 +1,56 @@
 @import "ui-variables";
 @import "syntax-variables";
+
+.smalls.round-box {
+  box-sizing: border-box;
+  border-radius: @component-border-radius;
+}
+
 atom-text-editor, atom-text-editor::shadow {
   .smalls-label {
+    .smalls.round-box;
     display: block;
     color: @text-color-highlight;
     background-color: @base-background-color;
-    border-radius: @component-border-radius;
     box-shadow: 0 0 10px @syntax-text-color;
     padding-left: 0.2em;
     padding-right: 0.2em;
     margin-left: -0.1em;
     margin-top: -1.25em;
     text-align: center;
-    &.final {
-      background-color: @background-color-info;
+    &.not-final {
+      box-shadow: none;
+      background-color: @background-color-error;
+      // background-color: @syntax-result-marker-color;
+      // background-color: @syntax-color-removed;
+      // background-color: lighten(@background-color-error, 30%);
     }
-    span.decided {
+    .decided {
       text-decoration: line-through;
     }
   }
   .smalls-candidate .region {
+    .smalls.round-box;
     background-color: transparent;
-    border-radius: @component-border-radius;
-    border: 1px solid @syntax-result-marker-color;
-    box-sizing: border-box;
+    border: 1px solid fadeout(@syntax-result-marker-color, 70%);
+    background-color: @syntax-selection-color;
   }
   .smalls-flash .region {
     background-color: @background-color-info;
+  }
+}
+
+.smalls-input {
+  .editor-container {
+    padding: @component-padding/2 @component-padding;
+    width: 100%;
+  }
+}
+atom-text-editor[mini].smalls.search {
+  border: none;
+  color: @text-color;
+  cursor: default;
+  &.is-focused {
+    box-shadow: none;
   }
 }

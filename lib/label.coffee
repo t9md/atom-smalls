@@ -5,54 +5,28 @@ class Label extends HTMLElement
   editor: null
   editorElement: null
   marker: null
-  overlayMarker: null
-  fullMatch: false
   char1: null
   char2: null
 
   initialize: ({@editor, @marker}) ->
     @className = 'smalls-label'
     @editorElement = atom.views.getView(@editor)
-    @overlayMarker = null
 
-    @appendChild(@char1 = document.createElement 'span')
-    @appendChild(@char2 = document.createElement 'span')
+    @appendChild(@char1 = document.createElement('span'))
+    @appendChild(@char2 = document.createElement('span'))
     this
 
-  isFullMatch: ->
-    @fullMatch
-
-  match: (pattern) ->
-    labelText = @getLabelText()
-    if match = pattern.exec(labelText)
-      if match[0].length < labelText.length
-        @char1.className = 'decided'
-      else if match[0].length is labelText.length
-        @fullMatch = true
-      true
-    else
-      @destroy()
-      false
-
-  setLabelText: (label) ->
-    @fullMatch = false
+  setLabelText: (label, usedCount) ->
+    @classList.toggle('not-final', usedCount > 1)
     @char1.className = ''
     [@char1.textContent, @char2.textContent] = label.split('')
 
-  getLabelText: ->
+  getText: ->
     @textContent
-
-  setFinal: ->
-    @classList.add('final')
 
   show: ->
     point = @marker.getBufferRange()[settings.get('labelPosition')]
-    @overlayMarker = @createOverlay(point)
-
-  createOverlay: (point) ->
-    marker = @editor.markBufferPosition(point, {invalidate: "never", persistent: false})
-    @editor.decorateMarker(marker, {type: 'overlay', item: this})
-    marker
+    @editor.decorateMarker(@marker, {type: 'overlay', position: 'tail', item: this})
 
   land: ->
     atom.workspace.paneForItem(@editor).activate()
@@ -77,11 +51,6 @@ class Label extends HTMLElement
 
   destroy: ->
     @marker.destroy()
-    @overlayMarker?.destroy()
-
-    #   @editor, @editorElement, @marker, @overlayMarker, @fullMatch
-    #   @char1, @char2
-    # } = {}
     @remove()
 
 module.exports = document.registerElement 'smalls-label',
