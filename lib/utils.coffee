@@ -58,6 +58,20 @@ ElementBuilder =
       element.setAttribute(name, value)
     element
 
+# Return enough amount of label chars to show specified amount of label.
+# Label char is one char(e.g. 'A'), or two char(e.g. 'AA').
+getLabelChars = ({amount, chars}) ->
+  labels = chars.split('')
+  if amount <= labels.length # one char label
+    labels[0...amount]
+  else # two char label
+    _labels = []
+    for a in labels
+      for b in labels
+        _labels.push(a + b)
+    repeatCount = Math.ceil(amount / _labels.length)
+    _.flatten([1..repeatCount].map -> _labels)[0...amount]
+
 module.exports = {
   getView
   getRangesForText
@@ -65,4 +79,5 @@ module.exports = {
   ElementBuilder
   getVisibleBufferRange
   getVisibleEditors
+  getLabelChars
 }

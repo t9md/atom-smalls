@@ -1,32 +1,51 @@
-{CompositeDisposable} = require 'atom'
+{Emitter, CompositeDisposable} = require 'atom'
 {ElementBuilder} = require './utils'
-settings = require './settings'
 
 class Input extends HTMLElement
   ElementBuilder.includeInto(this)
+  mode: null
+  emitter: null
+  editor: null
+  editorElement: null
+  editorContainer: null
+  panel: null
+  subscriptions: null
+  labelChar: ''
+
+  onDidCancel: (fn) -> @emitter.on 'did-cancel', fn
+  onDidChange: (fn) -> @emitter.on 'did-change', fn
+  onDidChooseLabel: (fn) -> @emitter.on 'did-choose-label', fn
+  onDidSetMode: (fn) -> @emitter.on 'did-set-mode', fn
 
   createdCallback: ->
     @className = 'smalls-input'
+    @emitter = new Emitter
+    @buildElements()
+    @editor = @editorElement.getModel()
+    @editor.setMini(true)
+    @initialize()
+
+  buildElements: ->
     @appendChild(
-      @container = @div
+      @editorContainer = @div
         classList: ['editor-container']
     ).appendChild(
       @editorElement = @atomTextEditor
         classList: ['editor', 'smalls']
         attribute: {mini: ''}
     )
-    @editor = @editorElement.getModel()
-    @editor.setMini(true)
 
-  initialize: (@main) ->
-    @mode = null
+  subscribe: (disposable) ->
+    @subscriptions.add(disposable)
+
+  initialize: ->
     @panel = atom.workspace.addBottomPanel(item: this, visible: false)
     @subscriptions = new CompositeDisposable
-    @subscriptions.add atom.commands.add 'atom-text-editor.smalls.search',
+    @subscribe atom.commands.add 'atom-text-editor.smalls.search',
       'smalls:jump': => @jump()
       'core:confirm': => @jump()
 
-    @subscriptions.add atom.commands.add @editorElement,
+    @subscribe atom.commands.add @editorElement,
       'core:cancel': => @cancel()
       'blur': => @cancel()
       'click': => @cancel()
@@ -42,54 +61,36 @@ class Input extends HTMLElement
   reset: ->
     @labelChar = ''
 
-  cancel: (e) ->
-    @main.clear()
-    @editor.setText ''
+  cancel: ->
+    @editor.setText('')
     @panel.hide()
     atom.workspace.getActivePane().activate()
 
   handleInput: ->
-    @subscriptions = subs = new CompositeDisposable
-    subs.add @editor.onWillInsertText ({text, cancel}) =>
-      if @getMode() is 'jump'
+    @subscribe @editor.onWillInsertText ({text, cancel}) =>
+      if @mode is 'jump'
         cancel()
         @labelChar += text
-        if label = @main.findLabel(@labelChar)
-          label.land()
+        @emitter.emit 'did-choose-label', {@labelChar}
 
-    subs.add @editor.onDidChange =>
-      if @getMode() is 'jump'
-        @setMode 'search'
-      text = @editor.getText()
-      @main.search text
-      jumpTriggerInputLength = settings.get 'jumpTriggerInputLength'
-      if jumpTriggerInputLength and (text.length >= jumpTriggerInputLength)
-        @jump()
+    @subscribe @editor.onDidChange =>
+      @setMode('search') if @mode is 'jump'
+      @emitter.emit 'did-change', @editor.getText()
 
-    subs.add @editor.onDidDestroy ->
+    @subscribe @editor.onDidDestroy ->
       subs.dispose()
 
   jump: ->
     return if @editor.isEmpty()
-    @setMode 'jump'
+    @setMode('jump')
 
   # mode should be one of 'search' or 'jump'.
   setMode: (mode) ->
     return if mode is @mode
-    if @mode?
-      @editorElement.classList.remove @mode
+    @editorElement.classList.remove(@mode)
     @mode = mode
-    @editorElement.classList.add @mode
-
-    switch @mode
-      when 'search'
-        @main.clearLabels()
-        @reset()
-      when 'jump'
-        @main.showLabel()
-
-  getMode: ->
-    @mode
+    @editorElement.classList.add(@mode)
+    @emitter.emit 'did-set-mode', @mode
 
   destroy: ->
     @panel.destroy()

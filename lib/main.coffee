@@ -1,23 +1,51 @@
 {CompositeDisposable, Range} = require 'atom'
 _ = require 'underscore-plus'
-settings = require './settings'
-{getVisibleEditors, decorateRanges, getRangesForText} = require './utils'
+{
+  getVisibleEditors, decorateRanges, getRangesForText, getLabelChars
+} = require './utils'
 
 Label = null
 Input = null
+
+getConfig = (param) ->
+  atom.config.get("smalls.#{param}")
 
 module.exports =
   activate: ->
     Label = require './label'
     Input = require './input'
-    @input = new Input().initialize(this)
+    @input = new Input()
 
     @markersByEditor = new Map
     @labels = []
 
     @subscriptions = new CompositeDisposable
-    @subscriptions.add atom.commands.add 'atom-text-editor',
+
+    @subscribe atom.commands.add 'atom-text-editor',
       'smalls:start': => @input.focus()
+
+    @subscribe @input.onDidChooseLabel ({labelChar}) =>
+      if label = @findLabel(labelChar)
+        label.land()
+        if getConfig('flashOnLand')
+          label.flash(getConfig('flashType'))
+
+    @subscribe @input.onDidChange (text) =>
+      @search(text)
+      jumpTriggerInputLength = getConfig('jumpTriggerInputLength')
+      if jumpTriggerInputLength and (text.length >= jumpTriggerInputLength)
+        @jump()
+
+    @subscribe @input.onDidSetMode (mode) =>
+      switch mode
+        when 'search'
+          @input.reset()
+          @clearLabels()
+        when 'jump'
+          @showLabel()
+
+  subscribe: (disposable) ->
+    @subscriptions.add(disposable)
 
   deactivate: ->
     @clear()
@@ -39,53 +67,35 @@ module.exports =
   showLabel: ->
     labels = []
     @markersByEditor.forEach (markers, editor) ->
-      for marker in markers ? []
-        label = new Label().initialize({editor, marker})
-        label.show()
-        labels.push(label)
+      for marker in markers
+        labels.push(new Label().initialize({editor, marker}))
     @setLabelChar(labels)
 
-  # Return enough amount of label chars to show specified amount of label.
-  # Label char is one char(e.g. 'A'), or two char(e.g. 'AA').
-  getLabelChars: (amount) ->
-    labelChars = settings.get('labelChars').split('')
-    if amount <= labelChars.length # one char label
-      labelChars[0...amount]
-    else # two char label
-      _labels = []
-      for a in labelChars
-        for b in labelChars
-          _labels.push(a + b)
-      layers = Math.ceil(amount / _labels.length)
-      _.flatten([1..layers].map -> _labels)[0...amount]
-
   setLabelChar: (@labels) ->
-    labelChars = @getLabelChars(@labels.length)
+    amount = @labels.length
+    chars = getConfig('labelChars')
+    labelChars = getLabelChars({amount, chars})
     usedCount = _.countBy(labelChars.slice(), (text) -> text)
-    for label in @labels
-      text = labelChars.shift()
-      label.setLabelText(text, usedCount[text])
 
-  findLabel: (labelChar) ->
+    labelPosition = getConfig('labelPosition')
+    for [label, text] in _.zip(@labels, labelChars)
+      label.setLabelText(text, {usedCount: usedCount[text], labelPosition})
+
+  findLabel: (input) ->
     [matched, unMatched] = _.partition @labels, (label) ->
-      label.getText().startsWith(labelChar)
+      label.getText().toLowerCase().startsWith(input.toLowerCase())
 
     label.destroy() for label in unMatched
 
-    fullMatched = []
-    for label in matched
-      labelText = label.getText()
-      if labelChar.length < labelText.length
-        label.char1.className = 'decided'
+    if matched.length
+      if matched[0].getText().length is input.length
+        if matched.length is 1
+          return matched[0]
+        else
+          @input.reset()
+          @setLabelChar(matched)
       else
-        fullMatched.push(label)
-
-    if fullMatched.length > 0
-      if fullMatched.length is 1
-        return fullMatched.shift()
-      else
-        @input.reset()
-        @setLabelChar(fullMatched)
+        matched.forEach (label) -> label.char1.className = 'decided'
     null
 
   clearLabels: ->

@@ -6,24 +6,29 @@
   border-radius: @component-border-radius;
 }
 
+@color-error-lighten: lighten(@background-color-error, 30%);
+
 atom-text-editor, atom-text-editor::shadow {
   .smalls-label {
     .smalls.round-box;
-    display: block;
-    color: @text-color-highlight;
+    // border: 1px solid contrast(@background-color-info);
+    // color: contrast(@background-color-info);
+    // background-color: @background-color-info;
+    // box-shadow: 0 0 2px contrast(@background-color-info);
+
     background-color: @base-background-color;
-    box-shadow: 0 0 10px @syntax-text-color;
+    border: 1px solid @syntax-text-color;
+    box-shadow: 0 0 3px @syntax-text-color;
+
     padding-left: 0.2em;
     padding-right: 0.2em;
     margin-left: -0.1em;
     margin-top: -1.25em;
+
     text-align: center;
     &.not-final {
-      box-shadow: none;
-      background-color: @background-color-error;
-      // background-color: @syntax-result-marker-color;
-      // background-color: @syntax-color-removed;
-      // background-color: lighten(@background-color-error, 30%);
+      color: contrast(@color-error-lighten);
+      background-color: @color-error-lighten;
     }
     .decided {
       text-decoration: line-through;
@@ -31,7 +36,6 @@ atom-text-editor, atom-text-editor::shadow {
   }
   .smalls-candidate .region {
     .smalls.round-box;
-    background-color: transparent;
     border: 1px solid fadeout(@syntax-result-marker-color, 70%);
     background-color: @syntax-selection-color;
   }
@@ -47,10 +51,6 @@ atom-text-editor, atom-text-editor::shadow {
   }
 }
 atom-text-editor[mini].smalls.search {
-  border: none;
   color: @text-color;
   cursor: default;
-  &.is-focused {
-    box-shadow: none;
-  }
 }

@@ -1,5 +1,4 @@
 _ = require 'underscore-plus'
-settings = require './settings'
 
 class Label extends HTMLElement
   editor: null
@@ -16,17 +15,18 @@ class Label extends HTMLElement
     @appendChild(@char2 = document.createElement('span'))
     this
 
-  setLabelText: (label, usedCount) ->
+  setLabelText: (label, {usedCount, labelPosition}) ->
     @classList.toggle('not-final', usedCount > 1)
     @char1.className = ''
     [@char1.textContent, @char2.textContent] = label.split('')
 
+    unless @displayed
+      point = @marker.getBufferRange()[labelPosition]
+      @editor.decorateMarker(@marker, {type: 'overlay', position: 'tail', item: this})
+      @displayed = true
+
   getText: ->
     @textContent
-
-  show: ->
-    point = @marker.getBufferRange()[settings.get('labelPosition')]
-    @editor.decorateMarker(@marker, {type: 'overlay', position: 'tail', item: this})
 
   land: ->
     atom.workspace.paneForItem(@editor).activate()
@@ -35,12 +35,10 @@ class Label extends HTMLElement
       @editor.selectToBufferPosition(point)
     else
       @editor.setCursorBufferPosition(point)
-    if settings.get('flashOnLand')
-      @flash()
 
-  flash: ->
+  flash: (type) ->
     marker = @marker.copy()
-    if settings.get('flashType') is 'word'
+    if type is 'word'
       range = @editor.getLastCursor().getCurrentWordBufferRange()
       marker.setBufferRange(range)
 
