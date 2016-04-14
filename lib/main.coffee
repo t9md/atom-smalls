@@ -34,7 +34,8 @@ module.exports =
       @search(text)
       jumpTriggerInputLength = getConfig('jumpTriggerInputLength')
       if jumpTriggerInputLength and (text.length >= jumpTriggerInputLength)
-        @jump()
+        @input.jump()
+
 
     @subscribe @input.onDidSetMode (mode) =>
       switch mode

@@ -5,6 +5,7 @@
  - extract many functions as utils.coffee
  - Input communicate with main through emitting event
  - Tweak style
+ - Support lowercase char
 
 ## 0.1.9
 - Fix: #2 Workaround upstream Atom bug. setting view not appear from Atom v1.4.0.
