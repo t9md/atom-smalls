@@ -64,11 +64,17 @@ You can customize label style in `style.less`.
 e.g.
 
 ```less
+@color-error-lighten: lighten(@background-color-error, 30%);
 atom-text-editor::shadow .smalls-label {
-  box-shadow: 0px 0px 10px @text-color;
-  background-color: @background-color-error;
-  &.final {
-    background-color: @background-color-info;
+  box-shadow: 0 0 3px @syntax-text-color;
+  background-color: @base-background-color;
+  border: 1px solid @syntax-text-color;
+  &.not-final {
+    color: contrast(@color-error-lighten);
+    background-color: @color-error-lighten;
+  }
+  .decided {
+    text-decoration: line-through;
   }
 }
 ```
