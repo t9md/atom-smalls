@@ -19,7 +19,7 @@ getRangesForText = (editor, text) ->
     ranges.push(range)
   ranges
 
-markerOptions = {invalidate: 'never', persistent: false}
+markerOptions = {invalidate: 'never'}
 decorateOptions = {type: 'highlight', class: 'smalls-candidate'}
 decorateRanges = (editor, ranges) ->
   markers = []
