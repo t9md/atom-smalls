@@ -58,7 +58,7 @@ class Input extends HTMLElement
     @setMode('search')
     @editorElement.focus()
 
-  reset: ->
+  resetLabelCharChoice: ->
     @labelChar = ''
 
   cancel: ->

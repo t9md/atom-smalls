@@ -1,7 +1,10 @@
 {CompositeDisposable, Range} = require 'atom'
 _ = require 'underscore-plus'
 {
-  getVisibleEditors, decorateRanges, getRangesForText, getLabelChars
+  getVisibleEditors
+  decorateRanges,
+  getLabelChars
+  getRangesForText
 } = require './utils'
 
 Label = null
@@ -25,10 +28,7 @@ module.exports =
       'smalls:start': => @input.focus()
 
     @subscribe @input.onDidChooseLabel ({labelChar}) =>
-      if label = @findLabel(labelChar)
-        label.land()
-        if getConfig('flashOnLand')
-          label.flash(getConfig('flashType'))
+      @landOrUpdateLabelCharForLabels(labelChar)
 
     @subscribe @input.onDidChange (text) =>
       @search(text)
@@ -36,14 +36,13 @@ module.exports =
       if jumpTriggerInputLength and (text.length >= jumpTriggerInputLength)
         @input.jump()
 
-
     @subscribe @input.onDidSetMode (mode) =>
       switch mode
         when 'search'
-          @input.reset()
+          @input.resetLabelCharChoice()
           @clearLabels()
         when 'jump'
-          @showLabel()
+          @showLabels()
 
   subscribe: (disposable) ->
     @subscriptions.add(disposable)
@@ -51,6 +50,17 @@ module.exports =
   deactivate: ->
     @clear()
     @subscriptions.dispose()
+
+  land: (label) ->
+    editor = label.editor
+    atom.workspace.paneForItem(editor).activate()
+    point = label.getPosition()
+    if (editor.getSelections().length is 1) and (not editor.getLastSelection().isEmpty())
+      editor.selectToBufferPosition(point)
+    else
+      editor.setCursorBufferPosition(point)
+
+    label.flash(getConfig('flashType')) if getConfig('flashOnLand')
 
   clearAllMarkers: ->
     @markersByEditor.forEach (markers) ->
@@ -61,43 +71,45 @@ module.exports =
     @clearAllMarkers()
     return unless text
     for editor in getVisibleEditors()
-      ranges = getRangesForText(editor, text)
-      if (markers = decorateRanges(editor, ranges)).length
+      markers = decorateRanges(editor, getRangesForText(editor, text))
+      if markers.length
         @markersByEditor.set(editor, markers)
 
-  showLabel: ->
+  showLabels: ->
     labels = []
     @markersByEditor.forEach (markers, editor) ->
       for marker in markers
         labels.push(new Label().initialize({editor, marker}))
-    @setLabelChar(labels)
+    @setLabelCharToLabels(labels)
 
-  setLabelChar: (@labels) ->
-    amount = @labels.length
-    chars = getConfig('labelChars')
-    labelChars = getLabelChars({amount, chars})
-    usedCount = _.countBy(labelChars.slice(), (text) -> text)
+  setLabelCharToLabels: (@labels) ->
+    labelChars = getLabelChars(amount: @labels.length, chars: getConfig('labelChars'))
+    usedCountByText = _.countBy(labelChars, (text) -> text)
 
     labelPosition = getConfig('labelPosition')
     for [label, text] in _.zip(@labels, labelChars)
-      label.setLabelText(text, {usedCount: usedCount[text], labelPosition})
+      usedCount = usedCountByText[text]
+      label.setLabelText(text, {usedCount, labelPosition})
 
-  findLabel: (input) ->
-    [matched, unMatched] = _.partition @labels, (label) ->
-      label.getText().toLowerCase().startsWith(input.toLowerCase())
+  landOrUpdateLabelCharForLabels: (labelChar) ->
+    labelCharInLowerCase = labelChar.toLowerCase()
+    matched = @labels.filter (label) ->
+      if label.getText().toLowerCase().startsWith(labelCharInLowerCase)
+        true
+      else
+        label.destroy()
+        false
 
-    label.destroy() for label in unMatched
-
-    if matched.length
-      if matched[0].getText().length is input.length
-        if matched.length is 1
-          return matched[0]
-        else
-          @input.reset()
-          @setLabelChar(matched)
+    if matched.length is 1
+      @land(matched[0])
+    else
+      if labelChar.length is matched[0].getText().length
+        @input.resetLabelCharChoice()
+        @setLabelCharToLabels(matched)
       else
         matched.forEach (label) -> label.char1.className = 'decided'
-    null
+
+      null
 
   clearLabels: ->
     label.destroy() for label in @labels

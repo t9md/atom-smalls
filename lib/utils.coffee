@@ -1,32 +1,30 @@
 {Range} = require 'atom'
 _ = require 'underscore-plus'
 
-getView = (model) ->
-  atom.views.getView(model)
-
-getVisibleBufferRange = (editor) ->
-  [startRow, endRow] = getView(editor).getVisibleRowRange()
+getVisibleEditorRange = (editor) ->
+  [startRow, endRow] = editor.element.getVisibleRowRange()
   return null unless (startRow? and endRow?)
   startRow = editor.bufferRowForScreenRow(startRow)
   endRow = editor.bufferRowForScreenRow(endRow)
   new Range([startRow, 0], [endRow, Infinity])
 
 getRangesForText = (editor, text) ->
+  getRangesForRegExp(editor, ///#{_.escapeRegExp(text)}///ig)
+
+getRangesForRegExp = (editor, pattern) ->
   ranges = []
-  pattern = ///#{_.escapeRegExp(text)}///ig
-  scanRange = getVisibleBufferRange(editor)
+  scanRange = getVisibleEditorRange(editor)
   editor.scanInBufferRange pattern, scanRange, ({range}) ->
     ranges.push(range)
   ranges
 
-markerOptions = {invalidate: 'never'}
-decorateOptions = {type: 'highlight', class: 'smalls-candidate'}
 decorateRanges = (editor, ranges) ->
   markers = []
+  decorationOptions = {type: 'highlight', class: 'smalls-candidate'}
   for range in ranges ? []
-    marker = editor.markScreenRange(range, markerOptions)
-    editor.decorateMarker(marker, decorateOptions)
+    marker = editor.markScreenRange(range)
     markers.push(marker)
+    editor.decorateMarker(marker, decorationOptions)
   markers
 
 getVisibleEditors = ->
@@ -49,7 +47,7 @@ ElementBuilder =
     @createElement 'atom-text-editor', params
 
   createElement: (element, {classList, textContent, id, attribute}) ->
-    element = document.createElement element
+    element = document.createElement(element)
 
     element.id = id if id?
     element.classList.add classList... if classList?
@@ -73,11 +71,11 @@ getLabelChars = ({amount, chars}) ->
     _.flatten([1..repeatCount].map -> _labels)[0...amount]
 
 module.exports = {
-  getView
   getRangesForText
+  getRangesForRegExp
   decorateRanges
   ElementBuilder
-  getVisibleBufferRange
+  getVisibleEditorRange
   getVisibleEditors
   getLabelChars
 }

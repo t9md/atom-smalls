@@ -9,7 +9,7 @@ class Label extends HTMLElement
 
   initialize: ({@editor, @marker}) ->
     @className = 'smalls-label'
-    @editorElement = atom.views.getView(@editor)
+    @editorElement = @editor.element
 
     @appendChild(@char1 = document.createElement('span'))
     @appendChild(@char2 = document.createElement('span'))
@@ -26,15 +26,10 @@ class Label extends HTMLElement
       @displayed = true
 
   getText: ->
-    @textContent
+    @textContent # is @char1.textContent + @char2.textContent
 
-  land: ->
-    atom.workspace.paneForItem(@editor).activate()
-    point = @marker.getStartBufferPosition()
-    if (@editor.getSelections().length is 1) and (not @editor.getLastSelection().isEmpty())
-      @editor.selectToBufferPosition(point)
-    else
-      @editor.setCursorBufferPosition(point)
+  getPosition: ->
+    @marker.getStartBufferPosition()
 
   flash: (type) ->
     marker = @marker.copy()
@@ -42,7 +37,7 @@ class Label extends HTMLElement
       range = @editor.getLastCursor().getCurrentWordBufferRange()
       marker.setBufferRange(range)
 
-    @editor.decorateMarker(marker, {type: 'highlight', class: 'smalls-flash'})
+    @editor.decorateMarker(marker, type: 'highlight', class: 'smalls-flash')
     setTimeout  ->
       marker.destroy()
     , 150
@@ -53,4 +48,4 @@ class Label extends HTMLElement
 
 module.exports = document.registerElement 'smalls-label',
   prototype: Label.prototype
-  extends:   'div'
+  extends: 'div'
