@@ -1,6 +1,8 @@
 {Range} = require 'atom'
 _ = require 'underscore-plus'
 
+smallsWordsPattern = new RegExp (atom.config.get("smalls.jumpWordPattern")), 'g'
+
 getVisibleEditorRange = (editor) ->
   [startRow, endRow] = editor.element.getVisibleRowRange()
   return null unless (startRow? and endRow?)
@@ -10,6 +12,9 @@ getVisibleEditorRange = (editor) ->
 
 getRangesForText = (editor, text) ->
   getRangesForRegExp(editor, ///#{_.escapeRegExp(text)}///ig)
+
+getRangesForWord = (editor) ->
+  getRangesForRegExp(editor, smallsWordsPattern)
 
 getRangesForRegExp = (editor, pattern) ->
   ranges = []
@@ -72,6 +77,7 @@ getLabelChars = ({amount, chars}) ->
 
 module.exports = {
   getRangesForText
+  getRangesForWord
   getRangesForRegExp
   decorateRanges
   ElementBuilder

@@ -5,7 +5,8 @@
   "description": "Rapid cursor positioning across any visible chars with search and jump.",
   "activationCommands": {
     "atom-workspace": [
-      "smalls:start"
+      "smalls:start",
+      "smalls:jump-word"
     ]
   },
   "keywords": [],
@@ -39,6 +40,12 @@
       "minimum": 0,
       "default": 0,
       "description": "0 means disable. If input exceed this length, automatically start jump mode"
+    },
+    "jumpWordPattern": {
+      "order": 4,
+      "type": "string",
+      "default": "([A-Z]+([0-9a-z])*)|[a-z0-9]{2,}",
+      "description": "Regular expression to label anchors for word boundary jump"
     },
     "flashOnLand": {
       "order": 32,

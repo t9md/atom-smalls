@@ -2,8 +2,9 @@
 _ = require 'underscore-plus'
 {
   getVisibleEditors
-  decorateRanges,
+  decorateRanges
   getLabelChars
+  getRangesForWord
   getRangesForText
 } = require './utils'
 
@@ -27,6 +28,9 @@ module.exports =
     @subscribe atom.commands.add 'atom-text-editor',
       'smalls:start': => @input.focus()
 
+    @subscribe atom.commands.add 'atom-text-editor',
+      'smalls:jump-word': => @input.focusWord()
+
     @subscribe @input.onDidChooseLabel ({labelChar}) =>
       @landOrUpdateLabelCharForLabels(labelChar)
 
@@ -41,6 +45,10 @@ module.exports =
         when 'search'
           @input.resetLabelCharChoice()
           @clearLabels()
+        when 'searchword'
+          @input.resetLabelCharChoice()
+          @clearLabels()
+          @searchWord()
         when 'jump'
           @showLabels()
 
@@ -72,6 +80,13 @@ module.exports =
     return unless text
     for editor in getVisibleEditors()
       markers = decorateRanges(editor, getRangesForText(editor, text))
+      if markers.length
+        @markersByEditor.set(editor, markers)
+
+  searchWord: ->
+    @clearAllMarkers()
+    for editor in getVisibleEditors()
+      markers = decorateRanges(editor, getRangesForWord(editor))
       if markers.length
         @markersByEditor.set(editor, markers)
 
