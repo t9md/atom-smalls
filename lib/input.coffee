@@ -58,6 +58,12 @@ class Input extends HTMLElement
     @setMode('search')
     @editorElement.focus()
 
+  focusWord: ->
+    @focus()
+    @setMode('searchword')
+    @setMode('jump')
+
+
   resetLabelCharChoice: ->
     @labelChar = ''
 
