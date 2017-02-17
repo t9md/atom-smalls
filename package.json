@@ -2,7 +2,7 @@
   "name": "smalls",
   "main": "./lib/main",
   "version": "0.2.0",
-  "description": "Rapid cursor positioning across any visible chars with search and jump.",
+  "description": "[Deprecated] Rapid cursor positioning across any visible chars with search and jump.",
   "activationCommands": {
     "atom-workspace": [
       "smalls:start"
@@ -55,6 +55,11 @@
         "word"
       ],
       "description": "Range to be flashed"
+    },
+    "showDeprecationWarning": {
+      "order": 36,
+      "type": "boolean",
+      "default": true
     }
   }
 }

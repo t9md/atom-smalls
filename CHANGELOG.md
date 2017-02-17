@@ -1,3 +1,6 @@
+## 0.3.0 Deprecated
+- Add `[Deprecated]` on package description and README.
+
 ## 0.2.0
 - Completely rewritten
  - use native overlay marker

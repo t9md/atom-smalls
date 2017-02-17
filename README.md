@@ -1,3 +1,8 @@
+# :warning: [Deprecated] Don't use.
+
+- Why? Because I no longer use this package in daily editing.
+- It's difficult to have motivation to maintain package I don't use.
+
 # smalls
 
 Rapid cursor positioning across any visible chars with search and jump.

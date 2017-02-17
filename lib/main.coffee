@@ -13,8 +13,22 @@ Input = null
 getConfig = (param) ->
   atom.config.get("smalls.#{param}")
 
+showDeprecationWarningOnce = (pkgName) ->
+  param = "#{pkgName}.showDeprecationWarning"
+  if atom.config.get(param)
+    atom.config.set(param, false)
+    message = """
+    ## Deprecated: `#{pkgName}`
+    - Because I no longer use this package.
+    - Sorry and thank you for using my package.
+    - This warning is not displayed on next activation.
+    """.replace(/_/g, ' ')
+    atom.notifications.addWarning(message, dismissable: true)
+
 module.exports =
   activate: ->
+    showDeprecationWarningOnce('smalls')
+
     Label = require './label'
     Input = require './input'
     @input = new Input()
