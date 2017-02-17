@@ -42,8 +42,8 @@ class Input extends HTMLElement
     @panel = atom.workspace.addBottomPanel(item: this, visible: false)
     @subscriptions = new CompositeDisposable
     @subscribe atom.commands.add 'atom-text-editor.smalls.search',
-      'smalls:jump': => @jump()
-      'core:confirm': => @jump()
+      'smalls:jump': => @jump() unless @editor.isEmpty()
+      'core:confirm': => @jump() unless @editor.isEmpty()
 
     @subscribe atom.commands.add @editorElement,
       'core:cancel': => @cancel()
@@ -53,23 +53,28 @@ class Input extends HTMLElement
     @handleInput()
     this
 
-  focus: ->
+  focus: ({mode}={}) ->
+    mode ?= 'search'
     @panel.show()
-    @setMode('search')
     @editorElement.focus()
+    console.log mode
+    @setMode(mode)
 
   resetLabelCharChoice: ->
     @labelChar = ''
 
   cancel: ->
+    @mode = null
     @editor.setText('')
     @panel.hide()
     atom.workspace.getActivePane().activate()
 
   handleInput: ->
     @subscribe @editor.onWillInsertText ({text, cancel}) =>
+      console.log text
       if @mode is 'jump'
         cancel()
+        @oldLabelChar = @labelChar
         @labelChar += text
         @emitter.emit 'did-choose-label', {@labelChar}
 
@@ -81,15 +86,16 @@ class Input extends HTMLElement
       subs.dispose()
 
   jump: ->
-    return if @editor.isEmpty()
     @setMode('jump')
 
   # mode should be one of 'search' or 'jump'.
   setMode: (mode) ->
     return if mode is @mode
-    @editorElement.classList.remove(@mode)
+    for className in ['search', 'jump']
+      @editorElement.classList.remove(className)
     @mode = mode
     @editorElement.classList.add(@mode)
+    # console.log @editorElement.classList
     @emitter.emit 'did-set-mode', @mode
 
   destroy: ->
