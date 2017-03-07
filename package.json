@@ -5,7 +5,8 @@
   "description": "[Deprecated] Rapid cursor positioning across any visible chars with search and jump.",
   "activationCommands": {
     "atom-workspace": [
-      "smalls:start"
+      "smalls:start",
+      "smalls:start-word-jump"
     ]
   },
   "keywords": [],

@@ -5,6 +5,7 @@ _ = require 'underscore-plus'
   decorateRanges,
   getLabelChars
   getRangesForText
+  getRangesForRegExp
 } = require './utils'
 
 Label = null
@@ -39,12 +40,19 @@ module.exports =
     @subscriptions = new CompositeDisposable
 
     @subscribe atom.commands.add 'atom-text-editor',
-      'smalls:start': => @input.focus()
+      'smalls:start': =>
+        @input.focus()
+      'smalls:start-word-jump': =>
+        @input.resetLabelCharChoice()
+        @showLabelForRegex(/\w+/g)
+        @input.focus({mode: 'jump'})
 
     @subscribe @input.onDidChooseLabel ({labelChar}) =>
       @landOrUpdateLabelCharForLabels(labelChar)
 
     @subscribe @input.onDidChange (text) =>
+      @clearAllMarkers()
+      return unless text
       @search(text)
       jumpTriggerInputLength = getConfig('jumpTriggerInputLength')
       if jumpTriggerInputLength and (text.length >= jumpTriggerInputLength)
@@ -57,6 +65,13 @@ module.exports =
           @clearLabels()
         when 'jump'
           @showLabels()
+
+  showLabelForRegex: (pattern) ->
+    for editor in getVisibleEditors()
+      markers = getRangesForRegExp(editor, pattern).map (range) ->
+        editor.markBufferRange(range)
+      if markers.length
+        @markersByEditor.set(editor, markers)
 
   subscribe: (disposable) ->
     @subscriptions.add(disposable)
@@ -82,8 +97,6 @@ module.exports =
     @markersByEditor.clear()
 
   search: (text) ->
-    @clearAllMarkers()
-    return unless text
     for editor in getVisibleEditors()
       markers = decorateRanges(editor, getRangesForText(editor, text))
       if markers.length
@@ -92,7 +105,15 @@ module.exports =
   showLabels: ->
     labels = []
     @markersByEditor.forEach (markers, editor) ->
-      for marker in markers
+      startColumn = editor.getFirstVisibleScreenColumn()
+      endColumn = startColumn + editor.getEditorWidthInChars()
+      visibleColumns = [startColumn..endColumn]
+      filterMarkers = (markers) ->
+        markers.filter (marker) ->
+          {start, end} = marker.getScreenRange()
+          (start.column in visibleColumns) or (end.column in visibleColumns)
+
+      for marker in filterMarkers(markers)
         labels.push(new Label().initialize({editor, marker}))
     @setLabelCharToLabels(labels)
 
@@ -107,12 +128,14 @@ module.exports =
 
   landOrUpdateLabelCharForLabels: (labelChar) ->
     labelCharInLowerCase = labelChar.toLowerCase()
-    matched = @labels.filter (label) ->
-      if label.getText().toLowerCase().startsWith(labelCharInLowerCase)
-        true
-      else
-        label.destroy()
-        false
+    [matched, unMatched] = _.partition @labels, (label) ->
+      label.getText().toLowerCase().startsWith(labelCharInLowerCase)
+
+    unless matched.length
+      @input.labelChar = @input.oldLabelChar
+      return
+
+    label.destroy() for label in unMatched
 
     if matched.length is 1
       @land(matched[0])
