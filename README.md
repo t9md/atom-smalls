@@ -2,6 +2,7 @@
 
 - Why? Because I no longer use this package in daily editing.
 - It's difficult to have motivation to maintain package I don't use.
+- Unpublished at 2017/06/11
 
 # smalls
 
